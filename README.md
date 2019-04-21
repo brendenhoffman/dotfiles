@@ -10,7 +10,7 @@ These are my desktop config files, I try to keep my programs minimal and functio
 + vifm
 + bash
 + moc (currently unconfigured)
-+ tmux (currently unconfigured, base config from [LukeSmithxyz](https://github.com/lukesmithxyz/voidrice)
++ tmux (currently unconfigured, base config from [LukeSmithxyz](https://github.com/lukesmithxyz/voidrice))
 + fcitx
 + blugon
 + dmenu/dmenu-frecency
