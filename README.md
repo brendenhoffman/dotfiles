@@ -5,7 +5,7 @@ These are my desktop config files, I try to keep my programs minimal and functio
 ## Programs configured in this repo
 
 + i3 (i3-gaps-git)
-+ Programs relying on Xresourses (st and colors)
++ Programs relying on Xresources (st and colors)
 + vim/neovim
 + vifm
 + bash
