@@ -1,0 +1,8 @@
+#include ".colors/xcolors"
+
+!! Set cursor size
+Xcursor.size: 20
+
+!! XFT Font Settings
+Xft.rgba: rgb
+Xft.dpi: 96

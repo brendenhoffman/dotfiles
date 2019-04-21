@@ -1,0 +1,102 @@
+# You can edit this file by hand, but it's recommended not to do that.
+
+# Marks:
+
+# Bookmarks:
+
+# TUI:
+al
+q0
+v2
+ov
+m-1
+l2
+r2
+
+# Left window history (oldest to newest):
+d/home/ren/.config
+	cef_user_data
+3
+d/home/ren/.config/cef_user_data
+	Dictionaries
+1
+d/home/ren/.config/cef_user_data/Dictionaries
+	..
+0
+d/home/ren/.config/cef_user_data
+	Dictionaries
+1
+d/home/ren/.config
+	cmus
+4
+d/home/ren/.config/cmus
+	playlists
+1
+d/home/ren/.config/cmus/playlists
+	..
+0
+d/home/ren/.config/cmus
+	playlists
+1
+d/home/ren/.config
+	i3
+10
+d/home/ren/.config/i3
+	config
+1
+d/home/ren
+	Vifm Wiki_files
+30
+d/home/ren/Vifm Wiki_files
+	..
+0
+d/home/ren
+	Documents
+24
+d/home/ren/Documents
+	..
+0
+d/home/ren
+	apk
+53
+
+# Right window history (oldest to newest):
+D/home/ren
+	..
+0
+
+# Command line history (oldest to newest):
+:cw
+:cq
+
+# Search history (oldest to newest):
+
+# Prompt history (oldest to newest):
+
+# Local filter history (oldest to newest):
+
+# Registers:
+""/home/ren/.local/share/vifm/Trash/000_2019-04-21 02-43-51.flv
+""/home/ren/.local/share/vifm/Trash/000_2019-04-21 02-47-10.flv
+""/home/ren/.local/share/vifm/Trash/000_2019-04-21 03-04-30.flv
+""/home/ren/.local/share/vifm/Trash/000_2019-04-21 03-24-13.flv
+
+# Directory stack (oldest to newest):
+
+# Trash content:
+t/home/ren/.local/share/vifm/Trash/000_FreeTube
+	/home/ren/.config/FreeTube
+t/home/ren/.local/share/vifm/Trash/000_cmus
+	/home/ren/.config/cmus
+t/home/ren/.local/share/vifm/Trash/000_Vifm Wiki_files
+	/home/ren/Vifm Wiki_files
+t/home/ren/.local/share/vifm/Trash/000_Vifm Wiki.html
+	/home/ren/Vifm Wiki.html
+t/home/ren/.local/share/vifm/Trash/000_2019-04-21 02-43-51.flv
+	/home/ren/2019-04-21 02-43-51.flv
+t/home/ren/.local/share/vifm/Trash/000_2019-04-21 02-47-10.flv
+	/home/ren/2019-04-21 02-47-10.flv
+t/home/ren/.local/share/vifm/Trash/000_2019-04-21 03-04-30.flv
+	/home/ren/2019-04-21 03-04-30.flv
+t/home/ren/.local/share/vifm/Trash/000_2019-04-21 03-24-13.flv
+	/home/ren/2019-04-21 03-24-13.flv
