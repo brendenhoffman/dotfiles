@@ -1,0 +1,4 @@
+#!/bin/bash
+exec xsetwacom set 'Wacom Intuos PT S 2 Pen stylus' Area 0 0 5066 3166 
+exec xsetwacom set 'Wacom Intuos PT S 2 Pen stylus' Suppress 1 
+exec xsetwacom set 'Wacom Intuos PT S 2 Pen stylus' RawSample 1 
