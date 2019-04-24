@@ -38,7 +38,7 @@ baobab 3.32.0-1
 bash 5.0.003-1
 bash-completion 2.8-1
 bc 1.07.1-3
-binutils 2.31.1-4
+binutils 2.32-1
 bison 3.3.2-1
 blas 3.8.0-2
 blender 17:2.79.b.git5.a29446da-2
@@ -113,14 +113,14 @@ firefox 66.0.3-1
 flac 1.3.2-2
 flex 2.6.4-2
 fontconfig 2:2.13.1+12+g5f5ec56-1
-freetype2 2.10.0-1
+freetype2 2.10.0-2
 fribidi 1.0.5-1
 fuse-common 3.4.2-1
 fuse2 2.9.9-1
 gawk 4.2.1-2
 gc 7.6.8-1
-gcc 8.2.1+20181127-1
-gcc-libs 8.2.1+20181127-1
+gcc 8.3.0-1
+gcc-libs 8.3.0-1
 gcr 3.28.1-1
 gdbm 1.18.1-2
 gdk-pixbuf2 2.38.1-1
@@ -134,7 +134,7 @@ git 2.21.0-1
 glew 2.1.0-1
 glib-networking 2.60.1+2+g1ce6b40-1
 glib2 2.60.1-1
-glibc 2.28-6
+glibc 2.29-1
 glibmm 2.60.0-1
 glu 9.0.0-5
 gmp 6.1.2-2
@@ -176,7 +176,7 @@ i3status 2.12-2
 iana-etc 20190415-1
 icu 64.1-1
 ilmbase 2.3.0-1
-imagemagick 7.0.8.40-1
+imagemagick 7.0.8.41-1
 imlib2 1.5.1-1
 inetutils 1.9.4-7
 intel-tbb 2019.3-1
@@ -226,11 +226,11 @@ lib32-flac 1.3.2-2
 lib32-fontconfig 2:2.13.1+12+g5f5ec56-1
 lib32-freetype2 2.10.0-1
 lib32-fribidi 1.0.5-1
-lib32-gcc-libs 8.2.1+20181127-1
+lib32-gcc-libs 8.3.0-1
 lib32-gdk-pixbuf2 2.38.1-1
 lib32-gettext 0.19.8.1-2
 lib32-glib2 2.60.1-1
-lib32-glibc 2.28-6
+lib32-glibc 2.29-1
 lib32-glu 9.0.0-4
 lib32-gmp 6.1.2-2
 lib32-gnutls 3.6.7-1
@@ -331,7 +331,7 @@ libatomic_ops 7.6.10-1
 libavc1394 0.5.4-3
 libbluray 1.1.1-1
 libcanberra 0.30+2+gc0620e4-2
-libcap 2.26-1
+libcap 2.27-1
 libcap-ng 0.7.9-1
 libconfig 1.7.2-1
 libcroco 0.6.13-1
@@ -376,7 +376,7 @@ libksba 1.3.5-1
 libldap 2.4.47-1
 liblqr 0.4.2-2
 libmad 0.15.1b-8
-libmagick 7.0.8.40-1
+libmagick 7.0.8.41-1
 libmediainfo 18.12-1
 libmm-glib 1.10.0-1
 libmms 0.6.4-2
@@ -435,7 +435,7 @@ libthai 0.1.28-1
 libtheora 1.1.1-4
 libtiff 4.0.10-1
 libtirpc 1.1.4-1
-libtool 2.4.6+42+gb88cebd5-2
+libtool 2.4.6+42+gb88cebd5-3
 libudev0-shim 1-3
 libunistring 0.9.10-1
 libunwind 1.3.1-1
@@ -487,7 +487,7 @@ libxxf86vm 1.1.4-2
 libzen 0.4.37-2
 licenses 20181104-1
 linux 5.0.6.artix1-1
-linux-api-headers 4.17.11-1
+linux-api-headers 5.0.7-1
 linux-firmware 20190313.efd2c1c-1
 llvm-libs 8.0.0-1
 lm_sensors 3.5.0-1
@@ -496,7 +496,7 @@ log4cplus 2.0.4-1
 logrotate 3.15.0-1
 luajit 2.0.5-2
 lvm2 2.02.184-4
-lz4 1:1.8.3-1
+lz4 1:1.9.0-1
 lzo 2.10-2
 m4 1.4.18-2
 mailcap 2.1.48+14+g5811758-1
@@ -574,7 +574,7 @@ patch 2.7.6-7
 pciutils 3.6.2-1
 pcre 8.43-1
 pcre2 10.32-2
-perl 5.28.1-1
+perl 5.28.2-1
 perl-error 0.17027-1
 perl-mailtools 2.20-2
 perl-timedate 2.30-5
@@ -604,7 +604,7 @@ python-decorator 4.4.0-1
 python-docopt 0.6.2-5
 python-idna 2.8-1
 python-markdown 3.0.1-2
-python-numpy 1.16.2-1
+python-numpy 1.16.3-1
 python-packaging 19.0-1
 python-pillow-simd 5.3.0.post0-1
 python-psutil 5.6.1-1
@@ -662,6 +662,7 @@ stress 1.0.4-5
 sudo 1.8.27-1
 suitesparse 5.4.0-1
 sxiv 25-1
+sxiv-rifle 1.3-1
 sysfsutils 2.1.0-10
 syslog-ng 3.20.1-1
 syslog-ng-runit 20180226-1
@@ -781,4 +782,4 @@ zeromq 4.3.1-2
 zita-alsa-pcmi 0.3.2-1
 zita-resampler 1.6.2-1
 zlib 1:1.2.11-3
-zstd 1.3.8-1
+zstd 1.4.0-1

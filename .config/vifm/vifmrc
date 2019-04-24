@@ -47,10 +47,11 @@ filextype *.html,*.htm firefox %f 2>/dev/null &,
 filetype *.[1-8] man ./%c,
 fileviewer *.[1-8] man ./%c | col -b,
 
-filextype *.jpg,*.jpeg,*.png,*.gif sxiv -a %f 2>/dev/null
-fileviewer *.jpg,*.jpeg,*.png,*.ico vifmimg draw %px %py %pw %ph %c %pc vifmimg clear
-filextype *.svg inkscape %f 2>/dev/null &
-filextype *.xcf gimp %f 2>/dev/null &
+filextype *.gif sxiv -a %f 2>/dev/null,
+filextype *.jpg,*.jpeg,*.png, sxiv-rifle %f 2>/dev/null,
+fileviewer *.jpg,*.jpeg,*.png,*.ico vifmimg draw %px %py %pw %ph %c %pc vifmimg clear,
+filextype *.svg inkscape %f 2>/dev/null &,
+filextype *.xcf gimp %f 2>/dev/null &,
 
 filetype *.md5 md5sum -c %f %S,
 filetype *.sha1 sha1sum -c %f %S,
