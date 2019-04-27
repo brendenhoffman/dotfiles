@@ -2,6 +2,7 @@
 source ~/.config/vifm/shortcuts
 
 set vicmd=$EDITOR
+let $BASH_ENV='~/.bash_aliases'
 set syscalls
 set nofollowlinks
 set dotfiles

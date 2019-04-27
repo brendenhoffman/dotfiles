@@ -1,4 +1,5 @@
 let mapleader=" "
+	let $BASH_ENV = "~/.bash_aliases"
 	set mouse=a
 	set nohlsearch
 	set nocompatible

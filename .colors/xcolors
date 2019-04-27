@@ -1,39 +1,40 @@
-! Apocalyptic
-! Warm brown-green
+! Ashes.Dark
+! Neutral dark
 
 ! special
-*.foreground:   #c0b18b
-*.background:   #1f1f1f
-*.cursorColor:  #c0b18b
+*.foreground:   #c7ccd1
+*.background:   #1c2023
+*.cursorColor:  #c7ccd1
 
 ! black
-*.color0:       #332d29
-*.color8:       #4b433d
+*.color0:       #1c2023
+*.color8:       #747c84
 
 ! red
-*.color1:       #d17b49
-*.color9:       #ac5d2f
+*.color1:       #c7ae95
+*.color9:       #c7ae95
 
 ! green
-*.color2:       #7b8748
-*.color10:      #647035
+*.color2:       #95c7ae
+*.color10:      #95c7ae
 
 ! yellow
-*.color3:       #af865a
-*.color11:      #8f6840
+*.color3:       #aec795
+*.color11:      #aec795
 
 ! blue
-*.color4:       #535c5c
-*.color12:      #444b4b
+*.color4:       #ae95c7
+*.color12:      #ae95c7
 
 ! magenta
-*.color5:       #775759
-*.color13:      #614445
+*.color5:       #c795ae
+*.color13:      #c795ae
 
 ! cyan
-*.color6:       #5e716e
-*.color14:      #495c56
+*.color6:       #95aec7
+*.color14:      #95aec7
 
 ! white
-*.color7:       #998c72
-*.color15:      #978965
+*.color7:       #c7ccd1
+*.color15:      #f3f4f5
+

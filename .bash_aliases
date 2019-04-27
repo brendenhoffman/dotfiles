@@ -1,3 +1,5 @@
+shopt -s expand_aliases
+
 # swap command
 function swap() { mv $1 $1._tmp && mv $2 $1 && mv $1._tmp $2; }
 
@@ -43,3 +45,4 @@ alias aliases='nvim ~/.bash_aliases'
 alias blkid='sudo blkid'
 alias chown='sudo chown'
 alias chmod='sudo chmod'
+alias xx='xrdb ~/.Xresources'
