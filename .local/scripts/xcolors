@@ -1,0 +1,3 @@
+#!/bin/sh
+# sets Xresouces colors. Pick a file in ~/.colors and it will write it to xcolors.
+ls ~/.local/colors | grep -v xcolors | dmenu -l 30 | xargs -I {} cat ~/.local/colors/'{}' > ~/.local/colors/xcolors && xrdb ~/.Xresources

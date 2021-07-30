@@ -1,0 +1,5 @@
+#!/bin/bash
+exec
+protonvpn-cli d
+protonvpn-cli c -f
+exit

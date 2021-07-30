@@ -1,5 +1,0 @@
-#include ".colors/xcolors"
-Xcursor.size: 20
-st.font: LiberationMono-14
-Xft.rgba: rgb
-Xft.dpi: 96
