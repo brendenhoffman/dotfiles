@@ -8,6 +8,7 @@ These are my desktop config files, I try to keep my programs minimal and functio
 + neovim
 + vifm
 + zsh
++ Xresources (Carry-over from old X11 config. Useful with colors scripts)
 
 Some scripts are also included. Note ~/.local/scripts is for misc and unused scripts, and ~/.local/bin is in my $PATH. scripts from the scripts folder can be moved to the bin folder if you please.
 
