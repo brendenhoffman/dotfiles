@@ -1,0 +1,61 @@
+" Other bingings
+nnoremap f :!sxiv -ft * 2>/dev/null &<CR>
+map R :restart<CR>
+map E :!EDITOR %f<CR>
+nnoremap s :shell<cr>
+nnoremap w :view<cr>
+vnoremap w :view<cr>gv
+
+
+" Pane manipulation
+map <C-h> <C-w>h
+map <C-j> <C-w>j
+map <C-k> <C-w>k
+map <C-l> <C-w>l
+map <C-o> <C-w>o
+map <C-s> <C-w>s
+map <C-v> <C-w>v
+
+" Map commands
+map mkd :mkdir<space>
+map tch :touch<space>
+map x7 :!7z x %f<cr>
+map xz :!tar -xzf %f<cr>
+map xj :!tar -xjf %f<cr>
+map xx :!tar -xJf %f<cr>
+
+" Ranger-like bindings
+nmap <space> tj
+nmap q ZQ
+nmap s :!
+nmap a cW
+
+" Mappings for faster renaming
+nnoremap I cw<c-a>
+nnoremap cc cw<c-u>
+nnoremap A cw
+
+" cd to dir
+nnoremap g/ :cd /<cr>
+nnoremap gr :cd /<cr>
+nnoremap gh :cd $HOME<cr>
+nnoremap gm :cd /media<cr>
+nnoremap gu :cd /usr<cr>
+nnoremap gR :cd /run<cr>
+nnoremap ge :cd /etc<cr>
+
+" Toggle visibility of preview window
+nnoremap w :view<cr>
+vnoremap w :view<cr>gv
+
+" Yank current directory path into the clipboard
+nnoremap yd :!echo %d | xclip %i<cr>
+
+" Yank current file path into the clipboard
+nnoremap yf :!echo %c:p | xclip %i<cr>
+
+" Open editor to edit vifmrc and apply settings after returning to vifm
+nnoremap ,c :write | edit $MYVIFMRC | restart<cr>
+
+" Toggle wrap setting on ,w key
+nnoremap ,w :set wrap!<cr>
