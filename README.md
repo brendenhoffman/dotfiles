@@ -10,9 +10,7 @@ These are my desktop config files, I try to keep my programs minimal and functio
 + zsh
 + Xresources (Carry-over from old X11 config. Useful with colors scripts)
 
-Some scripts are also included. Note ~/.local/scripts is for misc and unused scripts, and ~/.local/bin is in my $PATH. scripts from the scripts folder can be moved to the bin folder if you please.
-
-Borrowed scripts and plugins are property of their developers. There are some hard linked plugins in .local/share such as: [fzf-tab](https://github.com/Aloxaf/fzf-tab), [powerlevel10k](https://github.com/romkatv/powerlevel10k), [ale](https://github.com/dense-analysis/ale), [nvim-ghost](https://github.com/subnut/nvim-ghost.nvim), [syntastic](https://github.com/vim-syntastic/syntastic), [vim-airline](https://github.com/vim-airline/vim-airline), [vim-slime](https://github.com/jpalardy/vim-slime), and [vimwiki](https://github.com/vimwiki/vimwiki). At a later date these will probably be sourced from the aur.
+Some scripts are also included. Note .local/scripts is for misc and unused scripts, and .local/bin is in my $PATH. scripts from the scripts folder can be moved to the bin folder if you please. Check out my plugins in .local/share.
 
 ## If you like this rice...
 

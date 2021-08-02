@@ -3,7 +3,7 @@ if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]
   source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
 fi
 
-HISTFILE=~/.config/zsh/zhistory
+HISTFILE=~/.cache/zsh/zhistory
 HISTSIZE=100000
 SAVEHIST=4096
 
