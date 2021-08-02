@@ -1,14 +1,14 @@
-#.local/share
+# .local/share
 
 Here you will find the plugins I have explicitly installed. They are just symlinks, so here is a list with links. You can download them via your package manager and symlink them to this dir, or git their git repo here.
 
-Zsh:
+## Zsh:
 [fzf-tab](https://github.com/Aloxaf/fzf-tab)
 [powerlevel10k](https://github.com/romkatv/powerlevel10k)
 [zsh-history-substring-search](https://github.com/zsh-users/zsh-history-substring-search)
 [zsh-syntax-highlighting](https://github.com/zsh-users/zsh-syntax-highlighting)
 
-Neovim:
+## Neovim:
 [ale](https://github.com/dense-analysis/ale)
 [nvim-ghost](https://github.com/subnut/nvim-ghost.nvim)
 [syntastic](https://github.com/vim-syntastic/syntastic)
