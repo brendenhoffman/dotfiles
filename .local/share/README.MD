@@ -1,6 +1,6 @@
 # .local/share
 
-Here you will find the plugins I have explicitly installed. They are just symlinks, so here is a list with links. You can download them via your package manager and symlink them to this dir, or git their git repo here.
+Here you will find the plugins I have explicitly installed. They are just symlinks, so here is a list with links. You can download them via your package manager and symlink them to this dir, or git clone their git repo here.
 
 ## Zsh:
 [fzf-tab](https://github.com/Aloxaf/fzf-tab)
