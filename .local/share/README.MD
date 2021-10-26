@@ -17,3 +17,5 @@ Here you will find the plugins I have explicitly installed. They are just symlin
 [vimwiki](https://github.com/vimwiki/vimwiki)
 
 Currently, I host [fzf-tab-git](https://aur.archlinux.org/packages/fzf-tab-git/) and [nvim-ghost-git](https://aur.archlinux.org/packages/nvim-ghost-git/) on the AUR, so I encourage you to check it out.
+
+Note for Arch users: installing Powerlevel10k will not install it into you /usr/zsh/plugins directory. Handle this as you please, but please note that my .zshrc will look for it in this directory.

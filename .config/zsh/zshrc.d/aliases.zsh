@@ -56,3 +56,5 @@ alias fgrep='fgrep --color=auto'
 alias egrep='egrep --color=auto'
 alias mocp='mocp -M $XDG_CONFIG_HOME/moc/'
 alias srcinfo='makepkg --printsrcinfo > .SRCINFO'
+alias pvc="protonvpn-cli c -f"
+alias pvd="protonvpn-cli d"
