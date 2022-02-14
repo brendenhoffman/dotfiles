@@ -10,6 +10,8 @@ These are my desktop config files, I try to keep my programs minimal and functio
 + zsh
 + Xresources (Carry-over from old X11 config. Useful with colors scripts)
 
+The zsh configs are located in .config/zsh, please note that $ZDOTDIR must be set, but the files can be moved to wherever you would like it to point.
+
 Some scripts are also included. Note .local/scripts is for misc and unused scripts, and .local/bin is in my $PATH. scripts from the scripts folder can be moved to the bin folder if you please. Check out my plugins in .local/share.
 
 ## If you like this rice...
