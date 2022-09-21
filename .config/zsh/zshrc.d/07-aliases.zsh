@@ -47,7 +47,6 @@ alias trans='transmission-cli'
 alias errlog='journalctl -p err -e'
 alias r='vifm'
 alias sr='sudo vifmrun .'
-alias cura='sudo cura &'
 alias cd..='cd ..'
 alias cl..='cl ..'
 alias cdg='cd ~/.local/git'
@@ -56,5 +55,3 @@ alias fgrep='fgrep --color=auto'
 alias egrep='egrep --color=auto'
 alias mocp='mocp -M $XDG_CONFIG_HOME/moc/'
 alias srcinfo='makepkg --printsrcinfo > .SRCINFO'
-alias pvc="protonvpn-cli c -f"
-alias pvd="protonvpn-cli d"
