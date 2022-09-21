@@ -1,4 +1,4 @@
-alias aliases='nvim $ZDOTDIR/zshrc.d/aliases.zsh'
+alias aliases='nvim $ZDOTDIR/zshrc.d/07-aliases.zsh'
 alias zhist='cat $XDG_CACHE_HOME/zsh/zhistory'
 alias zshrc='nvim $ZDOTDIR/.zshrc'
 alias reload='source $ZDOTDIR/.zshrc'
