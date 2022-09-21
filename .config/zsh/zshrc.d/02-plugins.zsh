@@ -1,8 +1,7 @@
 # Theme
 source ~/.local/share/zsh/plugins/powerlevel10k/powerlevel10k.zsh-theme
 # Replace zsh completion with fzf
-#source ~/.local/share/zsh/plugins/fzf-tab-git/fzf-tab.zsh
-source ~/.local/share/zsh/plugins/fzf-tab-bin-git/fzf-tab.zsh
+source ~/.local/share/zsh/plugins/fzf-*/fzf-tab.zsh
 # Use syntax highlighting
 source ~/.local/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
 # Use history substring search
