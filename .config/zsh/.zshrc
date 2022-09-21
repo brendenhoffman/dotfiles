@@ -19,6 +19,3 @@ unset _f
 
 # To customize prompt, run `p10k configure` or edit ~/.config/zsh/.p10k.zsh.
 [[ ! -f $ZDOTDIR/.p10k.zsh ]] || source $ZDOTDIR/.p10k.zsh
-
-# Clear propmt on startup. Fixes bug with p10k and Krohnkite.
-sleep 0.004&&clear
