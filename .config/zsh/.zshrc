@@ -3,6 +3,12 @@ if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]
   source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
 fi
 
+if [[ -d "${XDG_CACHE_HOME:-$HOME/.cache}/zsh/" ]]; then
+:
+else
+  mkdir "${XDG_CACHE_HOME:-$HOME/.cache}/zsh/"
+fi
+
 HISTFILE=~/.cache/zsh/zhistory
 HISTSIZE=100000
 SAVEHIST=4096
