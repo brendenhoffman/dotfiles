@@ -24,8 +24,14 @@ let mapleader=" "
 " Check file with shellcheck
     map <leader>s :!clear && shellcheck %<CR>
 
-" Autoremove trailing whitespace
+" Autoremove/highlight trailing whitespace
     autocmd BufWritePost * %s/\s\+$//e
+    highlight ExtraWhitespace ctermbg=red guibg=red
+    match ExtraWhitespace /\s\+$/
+    au BufWinEnter * match ExtraWhitespace /\s\+$/
+    au InsertEnter * match ExtraWhitespace /\s\+\%#\@<!$/
+    au InsertLeave * match ExtraWhitespace /\s\+$/
+    au BufWinLeave * call clearmatches()
 
 " Run xrdb when I edit X files
     autocmd BufWritePost ~/.Xresources !xrdb %
