@@ -1,4 +1,4 @@
-let mapleader=" "
+let mapleader="\<Space>"
     let $BASH_ENV = "~/.config/zsh/.aliases"
     set mouse=a
     set nohlsearch
@@ -10,11 +10,6 @@ let mapleader=" "
     set splitbelow splitright
     set clipboard+=unnamedplus
 
-" Plugins
-    let g:slime_target = "tmux"
-    let g:slime_paste_file = "$HOME/.slime_paste"
-    let g:slime_default_config = {"socket_name": get(split($TMUX, ","), 0), "target_pane": ":.1"}
-
 " Autocompletion
     set wildmode=longest,list,full
 
@@ -22,7 +17,7 @@ let mapleader=" "
     autocmd FileType * setlocal formatoptions-=c formatoptions-=o formatoptions-=r
 
 " Check file with shellcheck
-    map <leader>s :!clear && shellcheck %<CR>
+    nmap <leader>s :!clear && shellcheck %<CR>
 
 " Autoremove/highlight trailing whitespace
     autocmd BufWritePost * %s/\s\+$//e
