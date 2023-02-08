@@ -13,7 +13,7 @@ if [ -d "$HOME/.local/bin" ] ; then
 fi
 
 if [ -d "$HOME/.junest" ] ; then
-    export PATH="$HOME/.local/share/.junest/bin":$PATH
+    export PATH="$HOME/.local/share/junest/bin":$PATH
     export PATH=$PATH:"$HOME/.junest/usr/bin_wrappers"
 fi
 
