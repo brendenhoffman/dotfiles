@@ -14,7 +14,7 @@ fi
 
 if [ -d "$HOME/.junest" ] ; then
     export PATH="$HOME/.local/share/.junest/bin":$PATH
-    export PATH=$PATH:"$HOME/.junest/bin_wrappers"
+    export PATH=$PATH:"$HOME/.junest/usr/bin_wrappers"
 fi
 
 if [ -d "$HOME/.local/share/man" ] ; then
