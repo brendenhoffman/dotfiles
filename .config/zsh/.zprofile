@@ -4,10 +4,6 @@ if [ -d "$HOME/.root/usr/bin" ] ; then
     export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:"$USERROOT/lib":"$USERROOT/lib64"
 fi
 
-if [ -d "$HOME/bin" ] ; then
-    PATH=$PATH:"$HOME/bin"
-fi
-
 if [ -d "$HOME/.local/bin" ] ; then
     PATH=$PATH:"$HOME/.local/bin"
 fi
