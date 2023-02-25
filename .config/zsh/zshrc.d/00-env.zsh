@@ -4,4 +4,4 @@ export XDG_CONFIG_HOME="$HOME/.config"
 
 export LESSHISTFILE="$XDG_CACHE_HOME/.lesshst"
 export CARGO_HOME="$XDG_CACHE_HOME/cargo"
-export GNUPGHOME="$XDG_CACHE_HOME/gnupg"
+export KDEHOME="$XDG_CONFIG_HOME/KDE"
