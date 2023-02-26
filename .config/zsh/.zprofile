@@ -1,21 +1,10 @@
-if [ -d "$HOME/.root/usr/bin" ] ; then
-    export USERROOT="$HOME/.root"
-    export PATH=$PATH:"$USERROOT/usr/bin"
-    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:"$USERROOT/lib":"$USERROOT/lib64"
-fi
+[ -d "$HOME/.root/usr/bin" ] && export USERROOT="$HOME/.root" && export PATH=$PATH:"$USERROOT/usr/bin" && export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:"$USERROOT/lib":"$USERROOT/lib64"
 
-if [ -d "$HOME/.local/bin" ] ; then
-    PATH=$PATH:"$HOME/.local/bin"
-fi
+[ -d "$HOME/.local/bin" ] && PATH=$PATH:"$HOME/.local/bin"
 
-if [ -d "$HOME/.junest" ] ; then
-    export PATH="$HOME/.local/share/junest/bin":$PATH
-    export PATH=$PATH:"$HOME/.junest/usr/bin_wrappers"
-fi
+[ -d "$HOME/.junest" ] && export PATH="$HOME/.local/share/junest/bin":$PATH:"$HOME/.junest/usr/bin_wrappers"
 
-if [ -d "$HOME/.local/share/man" ] ; then
-    MANPATH=$MANPATH:"$HOME/.local/share/man"
-fi
+[ -d "$HOME/.local/share/man" ] && MANPATH=$MANPATH:"$HOME/.local/share/man"
 
 export EDITOR="nvim"
 export VISUAL="nvim"
@@ -36,3 +25,4 @@ export GPG_TTY=$TTY
 # export GTK_IM_MODULE=fcitx
 # export QT_IM_MODULE=fcitx
 # export XMODIFIERS=@im=fcitx 
+
