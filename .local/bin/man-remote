@@ -1,0 +1,16 @@
+#!/bin/sh
+
+man $1 $2 && exit 0
+
+protocol="https://"
+remote_host="man.archlinux.org"
+remote_path="/man/"
+command="$1"
+section="${2:-1}" #if $2 is not set, default to section 1
+lang="${LANG%%_*}" #cut $LANG to the language designator
+ext=".raw"
+
+full_path="$protocol$remote_host$remote_path$command.$section.$lang$ext"
+echo "Man page not found locally, fetching from $full_path"
+
+curl -sS $full_path | man -l -
