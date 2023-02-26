@@ -1,4 +1,4 @@
-alias aliases='nvim $ZDOTDIR/deck.d/01-deck_aliases.zsh'
+alias deckaliases='nvim $ZDOTDIR/deck.d/01-deck_aliases.zsh'
 alias paru='paru -r $USERROOT --config $USERROOT/etc/pacman.conf --gpgdir $USERROOT/etc/pacman.d/gnupg'
 alias pacman='pacman -r $USERROOT --config $USERROOT/etc/pacman.conf --gpgdir $USERROOT/etc/pacman.d/gnupg'
 alias p='paru -r $USERROOT --config $USERROOT/etc/pacman.conf --gpgdir $USERROOT/etc/pacman.d/gnupg'
