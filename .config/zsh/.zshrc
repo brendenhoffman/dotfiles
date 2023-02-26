@@ -1,5 +1,5 @@
 # Enable Powerlevel10k instant prompt.
-[[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]] && source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
+[[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]] && . "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
 
 mkdir -p "${XDG_CACHE_HOME:-$HOME/.cache}/zsh/" 2>/dev/null
 
@@ -13,6 +13,6 @@ WORDCHARS=${WORDCHARS//\/[&.;]}                       # Don't consider certain c
 for _f in "$ZDOTDIR"/zshrc.d/*.{sh,zsh}(.N); do
   # ignore files that begin with a tilde
   case $_f:t in ~*) continue;; esac
-  source "$_f"
+  . "$_f"
 done
 unset _f
