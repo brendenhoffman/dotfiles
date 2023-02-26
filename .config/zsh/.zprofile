@@ -12,6 +12,7 @@ export SUDO_EDITOR="nvim -Z --noplugin"
 export READER="zathura"
 export ANDROID_HOME="/opt/android-sdk"
 export MOZ_WEBRENDER="1"
+export PAGER=$(command -v nvimpager || /usr/bin/less -R)
 export MANPAGER='nvim +Man! -c "set number relativenumber"'
 export LESS_TERMCAP_mb=$'\E[01;32m'
 export LESS_TERMCAP_md=$'\E[01;32m'
