@@ -16,3 +16,9 @@ for _f in "$ZDOTDIR"/zshrc.d/*.{sh,zsh}(.N); do
   . "$_f"
 done
 unset _f
+
+#Check if this is a nested session or .zprofile won't be loaded
+[ "$SHLVL" -eq 4 ] && [ "$DESKTOP_SESSION" = "gamescope-wayland" ] && [ -f "$ZDOTDIR/nestedProfile" ] && . "$ZDOTDIR/nestedProfile"
+
+# To customize prompt, run `p10k configure` or edit ~/.config/zsh/.p10k.zsh.
+[ -f $ZDOTDIR/.p10k.zsh ] && . $ZDOTDIR/.p10k.zsh
