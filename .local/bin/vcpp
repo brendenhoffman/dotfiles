@@ -13,7 +13,7 @@ if [ -v 2 ]; then
 	nvim "$CODEDIR/$1/$2"
 
 #If $2 is not set, open $1, if it does not exist, copy the template
-elif [[ -f "$CODEDIR/$1/$1.cpp" ]]; then
+elif [ -f "$CODEDIR/$1/$1.cpp" ]; then
 	nvim "$CODEDIR/$1/$1.cpp"
 else
 		cp "$CODEDIR/template.cpp" "$CODEDIR/$1/$1.cpp" && nvim "$CODEDIR/$1/$1.cpp"
