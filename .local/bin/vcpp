@@ -1,0 +1,20 @@
+#!/bin/sh
+
+CODEDIR="$HOME/Documents/code"
+
+#Error if no arguments are set
+[ $# -eq 0 ] && echo "Please specify a project" && exit
+
+#Make project dir if it doesn't exit
+mkdir -p "$CODEDIR/$1"
+
+#Check for $2 before opening a file, open $2 if it is set
+if [ -v 2 ]; then
+	nvim "$CODEDIR/$1/$2"
+
+#If $2 is not set, open $1, if it does not exist, copy the template
+elif [[ -f "$CODEDIR/$1/$1.cpp" ]]; then
+	nvim "$CODEDIR/$1/$1.cpp"
+else
+		cp "$CODEDIR/template.cpp" "$CODEDIR/$1/$1.cpp" && nvim "$CODEDIR/$1/$1.cpp"
+fi
