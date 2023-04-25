@@ -1,1 +1,1 @@
-This is simply a copy of my userChrome.css. To use make sure css editing is on in the browser, then navigate to .firefox (or whatever firefox fork you use), then create a folder named "chrome", and paste the css file there.
+This is simply a copy of my userChrome.css. To use make sure css editing is on in the browser, then navigate to .firefox (or whatever firefox fork you use), select the profile folder you currently use, then create a folder named "chrome", and paste the css file there.
