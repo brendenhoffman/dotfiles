@@ -2,7 +2,7 @@
 source $XDG_CONFIG_HOME/vifm/shortcuts
 
 set vicmd=$EDITOR
-let $BASH_ENV=$ZDOTDIR/zshrc.d/aliases.zsh"
+let $BASH_ENV=$ZDOTDIR/zshrc.d/07-aliases.zsh"
 set syscalls
 set nofollowlinks
 set dotfiles
