@@ -53,6 +53,6 @@ let mapleader="\<Space>"
     nnoremap <leader>sv :source ~/.config/nvim/init.vim<CR>
 
 " Tab is 4 spaces
-    set softtabstop=4
-    set shiftwidth=4
+    set softtabstop=2
+    set shiftwidth=2 smarttab
     set noexpandtab
