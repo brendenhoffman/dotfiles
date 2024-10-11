@@ -10,12 +10,11 @@ Here you will find the plugins I have explicitly installed. They are just symlin
 
 ## Neovim:
 [ale](https://github.com/dense-analysis/ale)
-[nvim-ghost](https://github.com/subnut/nvim-ghost.nvim)
 [syntastic](https://github.com/vim-syntastic/syntastic)
 [vim-airline](https://github.com/vim-airline/vim-airline)
 [vim-slime](https://github.com/jpalardy/vim-slime)
 [vimwiki](https://github.com/vimwiki/vimwiki)
 
-Currently, I host [fzf-tab-git](https://aur.archlinux.org/packages/fzf-tab-git/), its binary module [fzf-tab-bin-git](https://aur.archlinux.org/packages/fzf-tab-bin-git) and [nvim-ghost-git](https://aur.archlinux.org/packages/nvim-ghost-git/) on the AUR, so I encourage you to check it out.
+Currently, I host [fzf-tab-git](https://aur.archlinux.org/packages/fzf-tab-git/) and [nvim-ghost-git](https://aur.archlinux.org/packages/nvim-ghost-git/) on the AUR, so I encourage you to check it out.
 
 Note for Arch users: installing Powerlevel10k via pacman will not install it into you /usr/zsh/plugins directory. Handle this as you please, but please note that my .zshrc will look for it in this directory.
