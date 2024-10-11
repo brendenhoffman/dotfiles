@@ -10,7 +10,6 @@ Here you will find the plugins I have explicitly installed. They are just symlin
 
 ## Neovim:
 [ale](https://github.com/dense-analysis/ale)
-[syntastic](https://github.com/vim-syntastic/syntastic)
 [vim-airline](https://github.com/vim-airline/vim-airline)
 [vim-slime](https://github.com/jpalardy/vim-slime)
 [vimwiki](https://github.com/vimwiki/vimwiki)
