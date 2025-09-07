@@ -1,0 +1,199 @@
+#!/usr/bin/env bash
+# Usage: xdg-sweep [AGE_DAYS=180] [DEPTH=3] [MODE]
+# MODE: stale-cache (default) | all-cache
+set -euo pipefail
+
+age_days="${1:-180}"
+depth="${2:-3}"
+mode="${3:-stale-cache}"
+
+cfg="${XDG_CONFIG_HOME:-$HOME/.config}"
+data="${XDG_DATA_HOME:-$HOME/.local/share}"
+cache="${XDG_CACHE_HOME:-$HOME/.cache}"
+age_cutoff="$(date -d "-$age_days days" +%s)"
+
+# Build match lists
+mapfile -t pkgs < <(pacman -Qq 2>/dev/null || true)
+mapfile -t bins < <(compgen -c | sort -u || true)
+mapfile -t execs < <(grep -hE '^Exec=' /usr/share/applications/*.desktop ~/.local/share/applications/*.desktop 2>/dev/null |
+  sed 's/^Exec=//; s/ .*$//' | xargs -r -n1 basename | sort -u || true)
+mapfile -t appids < <(printf '%s\n' /usr/share/applications/*.desktop ~/.local/share/applications/*.desktop 2>/dev/null |
+  xargs -r -n1 basename | sed 's/\.desktop$//' | sort -u || true)
+
+is_in() {
+  local x="$1"
+  shift
+  printf '%s\n' "$@" | grep -Fxq -- "$x"
+}
+norm_names() {
+  local bn="$1"
+  printf '%s\n' \
+    "$bn" "${bn#org.kde.}" "${bn#org.}" "${bn#com.}" "${bn#io.}" \
+    "${bn%.desktop}" "${bn%.conf}" "${bn%.ini}" "${bn%.json}" \
+    "${bn%.yaml}" "${bn%.yml}" "${bn%.toml}" "${bn//_/}" "${bn//-/}"
+}
+
+# newest mtime inside a dir within depth; fallback to dir mtime
+newest_mtime_within() {
+  local d="$1" maxd="$2"
+  local newest
+  newest="$(find "$d" -mindepth 1 -maxdepth "$maxd" -printf '%T@\n' 2>/dev/null | sort -nr | head -n1 || true)"
+  if [[ -n "$newest" ]]; then printf '%s' "${newest%.*}"; else stat -c %Y -- "$d"; fi
+}
+dir_has_any_within() { find "$1" -mindepth 1 -maxdepth "$2" -print -quit 2>/dev/null | grep -q .; }
+
+classify_dir() {
+  local d="$1" base size mtime empty reason tag
+  base="$(basename "$d")"
+  # skip shared buckets
+  case "$base" in icons | mime | fonts | themes | applications | knewstuff* | kpackage | plasma* | kconf_update | kxmlgui5)
+    echo "SKIP     -    $d"
+    return
+    ;;
+  esac
+  size="$(du -sh --apparent-size -- "$d" 2>/dev/null | awk '{print $1}')"
+  mtime="$(newest_mtime_within "$d" "$depth")"
+  empty=1
+  dir_has_any_within "$d" "$depth" && empty=0
+
+  reason=""
+  while IFS= read -r cand; do
+    [[ -n "$reason" ]] || is_in "$cand" "${pkgs[@]}" && reason="pkg:$cand"
+    [[ -n "$reason" ]] || is_in "$cand" "${bins[@]}" && reason="bin:$cand"
+    [[ -n "$reason" ]] || is_in "$cand" "${execs[@]}" && reason="exec:$cand"
+    [[ -n "$reason" ]] || is_in "$cand" "${appids[@]}" && reason="appid:$cand"
+  done < <(norm_names "$base")
+
+  if [[ -n "$reason" ]]; then
+    tag="KEEP"
+  elif ((empty)); then
+    tag="EMPTY"
+  elif ((mtime < age_cutoff)); then
+    tag="STALE?"
+  else
+    tag="CHECK"
+  fi
+
+  printf "%-6s %8s  %s  " "$tag" "$size" "$d"
+  if [[ "$tag" == "KEEP" ]]; then
+    printf "(%s)\n" "$reason"
+  elif [[ "$tag" == "EMPTY" ]]; then
+    printf "(empty within depth=%s)\n" "$depth"
+  else
+    printf "(newest %s)\n" "$(date -d "@$mtime" +%F)"
+  fi
+}
+
+# .desktop Exec resolver: returns 0 if found, 1 if missing
+desktop_exec_exists() {
+  local f="$1" exe
+  exe="$(awk -F= '/^Exec=/{print $2; exit}' "$f" 2>/dev/null | awk '{print $1}')"
+  [[ -z "$exe" ]] && return 1
+  if [[ "$exe" == /* ]]; then [[ -x "$exe" ]]; else command -v -- "$exe" >/dev/null 2>&1; fi
+}
+
+classify_file() {
+  local f="$1" base size mtime reason tag
+  base="$(basename "$f")"
+
+  # broken symlink?
+  if [[ -L "$f" && ! -e "$f" ]]; then
+    printf "%-6s %8s  %s  (%s)\n" "BROKEN" "-" "$f" "dangling symlink"
+    return
+  fi
+
+  size="$(du -h --apparent-size -- "$f" 2>/dev/null | awk '{print $1}')"
+  mtime="$(stat -c %Y -- "$f")"
+
+  # try match
+  reason=""
+  while IFS= read -r cand; do
+    [[ -n "$reason" ]] || is_in "$cand" "${pkgs[@]}" && reason="pkg:$cand"
+    [[ -n "$reason" ]] || is_in "$cand" "${bins[@]}" && reason="bin:$cand"
+    [[ -n "$reason" ]] || is_in "$cand" "${execs[@]}" && reason="exec:$cand"
+    [[ -n "$reason" ]] || is_in "$cand" "${appids[@]}" && reason="appid:$cand"
+  done < <(norm_names "$base")
+
+  # special check: orphaned .desktop in ~/.local/share/applications
+  if [[ "$f" == "$HOME/.local/share/applications/"*.desktop ]]; then
+    if ! desktop_exec_exists "$f"; then
+      printf "%-6s %8s  %s  (%s)\n" "ORPHAN" "$size" "$f" "Exec target missing"
+      return
+    fi
+  fi
+
+  if [[ -n "$reason" ]]; then
+    tag="KEEP"
+  elif [[ "$size" == "0" || "$size" == "0B" || "$size" == "0K" ]]; then
+    tag="EMPTY"
+  elif ((mtime < age_cutoff)); then
+    tag="STALE?"
+  else
+    tag="CHECK"
+  fi
+
+  printf "%-6s %8s  %s  " "$tag" "$size" "$f"
+  if [[ "$tag" == "KEEP" ]]; then
+    printf "(%s)\n" "$reason"
+  elif [[ "$tag" == "EMPTY" ]]; then
+    printf "(empty file)\n"
+  else
+    printf "(mtime %s)\n" "$(date -d "@$mtime" +%F)"
+  fi
+}
+
+scan_root() {
+  local root="$1"
+  [ -d "$root" ] || return 0
+  printf "\n== %s ==\n" "$root"
+  shopt -s nullglob dotglob
+  for p in "$root"/*; do
+    [[ -e "$p" ]] || continue
+    if [[ -d "$p" ]]; then classify_dir "$p"; else classify_file "$p"; fi
+  done
+}
+
+scan_cache_filtered() { # only EMPTY/STALE? for brevity
+  local root="$1" maxd="$2"
+  [ -d "$root" ] || return 0
+  printf "\n== %s (EMPTY/STALE within depth=%s) ==\n" "$root" "$maxd"
+  shopt -s nullglob dotglob
+  for p in "$root"/*; do
+    [[ -e "$p" ]] || continue
+    if [[ -d "$p" ]]; then
+      local empty=1 newest size
+      dir_has_any_within "$p" "$maxd" && empty=0
+      if ((empty)); then
+        size="$(du -sh --apparent-size -- "$p" 2>/dev/null | awk '{print $1}')"
+        printf "EMPTY  %8s  %s\n" "$size" "$p"
+      else
+        newest="$(find "$p" -mindepth 1 -maxdepth "$maxd" -printf '%T@\n' 2>/dev/null | sort -nr | head -n1)"
+        newest=${newest%.*}
+        if [[ -n "$newest" && "$newest" -lt "$age_cutoff" ]]; then
+          size="$(du -sh --apparent-size -- "$p" 2>/dev/null | awk '{print $1}')"
+          printf "STALE? %8s  %s  (newest %s)\n" "$size" "$p" "$(date -d "@$newest" +%F)"
+        fi
+      fi
+    else
+      # files in cache
+      local size mtime
+      size="$(du -h --apparent-size -- "$p" 2>/dev/null | awk '{print $1}')"
+      mtime="$(stat -c %Y -- "$p")"
+      if [[ "$size" == "0" || "$size" == 0* ]]; then
+        printf "EMPTY  %8s  %s\n" "$size" "$p"
+      elif ((mtime < age_cutoff)); then
+        printf "STALE? %8s  %s  (mtime %s)\n" "$size" "$p" "$(date -d "@$mtime" +%F)"
+      fi
+    fi
+  done
+}
+
+printf "XDG sweep: age>%sd, depth=%s  (report only)\n" "$age_days" "$depth"
+scan_root "$cfg"
+scan_root "$data"
+
+if [[ "$mode" == "all-cache" ]]; then
+  scan_root "$cache"
+else
+  scan_cache_filtered "$cache" "$depth"
+fi

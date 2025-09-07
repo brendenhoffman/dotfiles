@@ -1,0 +1,53 @@
+#!/bin/bash
+set -euo pipefail
+
+PAD="${SNAP_PAD:-4}"   # change width via env var SNAP_PAD=5 etc.
+file=""
+note=""
+
+usage(){ echo "Usage: git-snap [--file <path>] [--note 'text']"; }
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -f|--file) file="${2:-}"; shift 2 ;;
+    -n|--note) note="${2:-}"; shift 2 ;;
+    -h|--help) usage; exit 0 ;;
+    *) echo "Unknown arg: $1" >&2; usage; exit 2 ;;
+  esac
+done
+
+if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+  echo "Not a git repo" >&2
+  exit 1
+fi
+
+ts="$(date -Iseconds)"
+
+# Count existing numbered snapshots on this branch
+count="$(git log --pretty=format:%s --grep='^[0-9][0-9][0-9][0-9]: snap' | wc -l | tr -d ' ')"
+num="$(printf "%0${PAD}d" $((count + 1)))"
+
+if [[ -n "$file" ]]; then
+  # Buffer-only snapshot of a single file
+  if git diff --quiet -- "$file" && ! git ls-files --error-unmatch -- "$file" >/dev/null 2>&1; then
+    echo "No changes in $file"
+    exit 0
+  fi
+  rel="$(git ls-files --full-name -- "$file" 2>/dev/null | head -n1)"
+  [[ -z "$rel" ]] && rel="$file"
+  git add -- "$file"
+  msg="$num: snap(file): $rel @ $ts"
+else
+  # Whole-repo snapshot if dirty
+  if [[ -z "$(git status --porcelain)" ]]; then
+    echo "No changes."
+    exit 0
+  fi
+  git add -A
+  msg="$num: snap: $ts"
+fi
+
+[[ -n "$note" ]] && msg="$msg — $note"
+
+git commit -m "$msg" --quiet --no-verify
+echo "Snapshot $num saved."

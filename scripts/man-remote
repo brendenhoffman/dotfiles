@@ -1,0 +1,52 @@
+#!/bin/sh
+# man-fallback: local man first; otherwise fetch from man.archlinux.org
+MANBIN=/usr/bin/man
+BASE=https://man.archlinux.org
+
+# If called with options (e.g. -k/-f/-l), just defer to real man
+case "$1" in '' | -*) exec "$MANBIN" "$@" ;; esac
+
+# Parse "man <section> <page>" vs "man <page>"
+section=
+case "$1" in
+[1-9] | [1-9][A-Za-z])
+  section="$1"
+  shift
+  ;;
+esac
+page="$1"
+shift 2>/dev/null || true
+
+# 1) Local presence check; if found, replace our process with real man
+if [ -n "$section" ]; then
+  if "$MANBIN" -w "$section" "$page" >/dev/null 2>&1; then
+    exec "$MANBIN" "$section" "$page" "$@"
+  fi
+else
+  if "$MANBIN" -w "$page" >/dev/null 2>&1; then
+    exec "$MANBIN" "$page" "$@"
+  fi
+fi
+
+# 2) Remote fallback (try $LANG then en)
+lang="${LANG%%_*}"
+[ -n "$lang" ] || lang=en
+tmp="$(mktemp "${TMPDIR:-/tmp}/man.XXXXXX")" || exit 2
+trap 'rm -f "$tmp"' EXIT INT TERM
+
+fetch() {
+  curl -fsSL "$1" -o "$tmp" && [ -s "$tmp" ] && exec "$MANBIN" -l "$tmp"
+}
+
+echo "man: not found locally; trying man.archlinux.org…" >&2
+if [ -n "$section" ]; then
+  fetch "$BASE/man/$page.$section.$lang.raw" || [ "$lang" = en ] || fetch "$BASE/man/$page.$section.en.raw"
+else
+  # common section order when unspecified
+  for s in 1 8 5 7 3 2 4; do
+    fetch "$BASE/man/$page.$s.$lang.raw" || [ "$lang" = en ] || fetch "$BASE/man/$page.$s.en.raw" || true
+  done
+fi
+
+echo "man: remote page not found: $page${section:+($section)}" >&2
+exit 16
