@@ -15,6 +15,8 @@ SYSTEM_ZSH_PLUGINS="/usr/share/zsh/plugins"
 SYSTEM_P10K_THEME="/usr/share/zsh-theme-powerlevel10k"
 SYSTEM_P10K_LINK="$SYSTEM_ZSH_PLUGINS/powerlevel10k"
 USER_PLUGINS="$HOME/.local/share/zsh/plugins"
+SCRIPTS_DIR="$REPO_DIR/scripts"
+LOCAL_BIN="$HOME/.local/bin"
 
 BACKUP_DIR="$REPO_DIR/.backup-$(date +%Y%m%d-%H%M%S)"
 
@@ -22,7 +24,11 @@ have() { command -v "$1" >/dev/null 2>&1; }
 sudo_do() { if [ "$(id -u)" -eq 0 ]; then "$@"; else sudo "$@"; fi; }
 msg() { printf "\033[1;36m==>\033[0m %s\n" "$*"; }
 warn() { printf "\033[1;33m!!\033[0m %s\n" "$*"; }
-ask() { local p="${1:-Proceed?} [Y/n] "; read -rp "$p" a || true; case "${a,,}" in y|yes|"") return 0;; *) return 1;; esac; }
+ask() {
+  local p="${1:-Proceed?} [Y/n] "
+  read -rp "$p" a || true
+  case "${a,,}" in y | yes | "") return 0 ;; *) return 1 ;; esac
+}
 
 ensure_git_early() {
   if have git; then return; fi
@@ -42,7 +48,7 @@ ensure_repo() {
   if [ ! -d "$REPO_DIR/.git" ]; then
     msg "Cloning dotfiles into $REPO_DIR"
     mkdir -p "$(dirname "$REPO_DIR")"
-    git clone "${DOTFILES_REMOTE:-https://github.com/USER/dotfiles.git}" "$REPO_DIR"
+    git clone "${DOTFILES_REMOTE:-https://github.com/brendenhoffman/dotfiles.git}" "$REPO_DIR"
   else
     msg "Repo exists at $REPO_DIR"
   fi
@@ -62,7 +68,10 @@ link_into_home() {
   local rel="$1"
   local src="$REPO_DIR/$rel"
   local dest="$HOME/${rel#./}"
-  if [ ! -e "$src" ]; then warn "Skip: $rel (missing in repo)"; return; fi
+  if [ ! -e "$src" ]; then
+    warn "Skip: $rel (missing in repo)"
+    return
+  fi
   mkdir -p "$(dirname "$dest")"
   backup_if_needed "$dest"
   ln -sfn "$src" "$dest"
@@ -92,7 +101,8 @@ arch_check_updates() {
 # When upgrading: refresh keyring first, then do full upgrade.
 arch_offer_system_upgrade_or_abort() {
   local state
-  arch_check_updates; state=$?
+  arch_check_updates
+  state=$?
 
   if [ $state -eq 0 ]; then
     msg "No system updates pending; continuing."
@@ -152,8 +162,8 @@ arch_setup_chaotic_and_paru() {
 Include = /etc/pacman.d/chaotic-mirrorlist
 EOF
       if ask "Install chaotic keyring/mirrorlist now?"; then
-        sudo_do pacman -Sy --needed --noconfirm chaotic-keyring chaotic-mirrorlist \
-          || warn "Could not install chaotic keyring/mirrorlist"
+        sudo_do pacman -Sy --needed --noconfirm chaotic-keyring chaotic-mirrorlist ||
+          warn "Could not install chaotic keyring/mirrorlist"
       else
         warn "Skipping keyring/mirrorlist install; syncing later may be required."
       fi
@@ -172,8 +182,10 @@ EOF
   if ! command -v paru >/dev/null 2>&1; then
     if ask "Build paru-bin from AUR?"; then
       sudo_do pacman -S --needed --noconfirm base-devel git
-      tmpdir="$(mktemp -d)"; trap 'rm -rf "$tmpdir"' EXIT
-      ( cd "$tmpdir"
+      tmpdir="$(mktemp -d)"
+      trap 'rm -rf "$tmpdir"' EXIT
+      (
+        cd "$tmpdir"
         git clone https://aur.archlinux.org/paru-bin.git
         cd paru-bin
         makepkg -si --noconfirm
@@ -186,7 +198,8 @@ EOF
 }
 
 arch_install_base() {
-  local pm="pacman"; have paru && pm="paru"
+  local pm="pacman"
+  have paru && pm="paru"
   $pm -S --needed --noconfirm zsh git neovim ripgrep fzf curl bat || true
   $pm -S --needed --noconfirm powerlevel10k zsh-autosuggestions zsh-syntax-highlighting || true
   $pm -S --needed --noconfirm fzf-tab-git || true
@@ -208,7 +221,8 @@ debian_install_or_clone_zsh_plugins() {
   if [ "${#need_clone[@]}" -gt 0 ]; then
     mkdir -p "$USER_PLUGINS"
     for entry in "${need_clone[@]}"; do
-      url="${entry%%|*}"; name="${entry##*|}"
+      url="${entry%%|*}"
+      name="${entry##*|}"
       dest="$USER_PLUGINS/$name"
       if [ ! -d "$dest" ]; then
         msg "Cloning $name into $dest"
@@ -243,7 +257,7 @@ ensure_system_zshenv() {
     tmp="$(mktemp)"
     [ -f "$SYSTEM_ZSHENV" ] && sudo_do cp "$SYSTEM_ZSHENV" "$tmp" || true
     if [ -f "$tmp" ]; then sed -i "\|^$ZDOTDIR_LINE\$|d" "$tmp"; fi
-    printf "%s\n" "$ZDOTDIR_LINE" >> "$tmp"
+    printf "%s\n" "$ZDOTDIR_LINE" >>"$tmp"
     sudo_do install -m 0644 "$tmp" "$SYSTEM_ZSHENV"
     rm -f "$tmp"
   else
@@ -253,8 +267,14 @@ ensure_system_zshenv() {
 
 maybe_chsh_to_zsh() {
   local z="$(command -v zsh || true)"
-  if [ -z "$z" ]; then warn "zsh not found; cannot chsh"; return; fi
-  if [ "$SHELL" = "$z" ]; then msg "Default shell already zsh"; return; fi
+  if [ -z "$z" ]; then
+    warn "zsh not found; cannot chsh"
+    return
+  fi
+  if [ "$SHELL" = "$z" ]; then
+    msg "Default shell already zsh"
+    return
+  fi
   if ask "Change default shell to zsh now?"; then
     chsh -s "$z" "$USER" && msg "Shell changed to zsh. Please log out and back in."
   else
@@ -263,14 +283,18 @@ maybe_chsh_to_zsh() {
 }
 
 bootstrap_nvim() {
-  if ! have nvim; then warn "Neovim not installed; skipping bootstrap"; return; fi
+  if ! have nvim; then
+    warn "Neovim not installed; skipping bootstrap"
+    return
+  fi
   msg "Running PlugInstall and BootstrapAll (headless)"
   nvim --headless +":silent PlugInstall" +":silent qall" || true
   nvim --headless +":BootstrapAll" +":qall" || true
 }
 
 arch_install_dev_tools() {
-  local pm="pacman"; have paru && pm="paru"
+  local pm="pacman"
+  have paru && pm="paru"
   msg "Installing developer tools (Arch, packages only)"
   $pm -S --needed --noconfirm stylua shfmt jq taplo sqlfluff prettier php-code-sniffer clang ripgrep bat || true
   if ! have rustup; then
@@ -297,13 +321,64 @@ debian_dev_tools_notify_and_yamlfmt() {
   echo " - bat: apt install bat"
   if ! have yamlfmt; then
     msg "Installing yamlfmt (Go)"
-    if ! have go; then sudo_do apt install -y golang || { warn "Go install failed; cannot install yamlfmt"; return; }; fi
+    if ! have go; then sudo_do apt install -y golang || {
+      warn "Go install failed; cannot install yamlfmt"
+      return
+    }; fi
     GOBIN="$HOME/.local/bin" go install github.com/google/yamlfmt/cmd/yamlfmt@latest || warn "yamlfmt install failed"
-    grep -q '\$HOME/.local/bin' "$HOME/.profile" 2>/dev/null || printf '%s\n' 'export PATH=$HOME/.local/bin:$PATH' >> "$HOME/.profile"
+    grep -q '\$HOME/.local/bin' "$HOME/.profile" 2>/dev/null || printf '%s\n' 'export PATH=$HOME/.local/bin:$PATH' >>"$HOME/.profile"
     msg "yamlfmt installed to ~/.local/bin"
   else
     msg "yamlfmt already installed"
   fi
+}
+
+deploy_scripts() {
+  [ -d "$SCRIPTS_DIR" ] || {
+    msg "No scripts/ dir; skipping"
+    return
+  }
+  mkdir -p "$LOCAL_BIN"
+
+  # ensure ~/.local/bin is on PATH (idempotent)
+  if ! printf '%s' "$PATH" | grep -q "$HOME/.local/bin"; then
+    if ! grep -q 'export PATH=\$HOME/.local/bin:\$PATH' "$HOME/.profile" 2>/dev/null; then
+      printf '%s\n' 'export PATH=$HOME/.local/bin:$PATH' >>"$HOME/.profile"
+      msg "Added ~/.local/bin to PATH via ~/.profile (relog to take effect)"
+    fi
+  fi
+
+  # link every executable file under scripts/, by basename
+  while IFS= read -r rel; do
+    src="$SCRIPTS_DIR/$rel"
+    base="$(basename "$rel")"
+    dest="$LOCAL_BIN/$base"
+
+    # skip non-executables
+    [ -x "$src" ] || {
+      warn "not executable: $rel (chmod +x if needed)"
+      continue
+    }
+
+    # backup any existing non-symlink
+    if [ -f "$dest" ] && [ ! -L "$dest" ]; then
+      backup_if_needed_file "$dest"
+    fi
+
+    ln -sfn "$src" "$dest"
+    msg "linked $dest -> $src"
+  done < <(cd "$SCRIPTS_DIR" && find . -type f -perm -111 -printf '%P\n' | sort)
+
+  # remove stale links in ~/.local/bin that point into repo but whose source disappeared
+  while IFS= read -r lnk; do
+    tgt="$(readlink -f "$lnk" 2>/dev/null || true)"
+    if [ -n "$tgt" ] && printf '%s' "$tgt" | grep -q "^$SCRIPTS_DIR/"; then
+      [ -e "$tgt" ] || {
+        rm -f "$lnk"
+        msg "removed stale link: $lnk"
+      }
+    fi
+  done < <(find "$LOCAL_BIN" -maxdepth 1 -type l -print)
 }
 
 main() {
@@ -334,6 +409,7 @@ main() {
   ensure_system_zshenv
   bootstrap_nvim
   maybe_chsh_to_zsh
+  deploy_scripts
 
   msg "Done. Backups (if any): $BACKUP_DIR"
   echo "Please log out and back in to pick up ZDOTDIR and any PATH changes."
