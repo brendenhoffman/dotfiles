@@ -255,14 +255,22 @@ setup_plugin_links() {
 
 ensure_system_zshenv() {
   local need=1
-  if [ -f "$SYSTEM_ZSHENV" ] && grep -Fxq "$ZDOTDIR_LINE" "$SYSTEM_ZSHENV"; then need=0; fi
+  if [ -f "$SYSTEM_ZSHENV" ] && grep -Fxq "$ZDOTDIR_LINE" "$SYSTEM_ZSHENV"; then
+    need=0
+  fi
+
   if [ "$need" -eq 1 ]; then
     msg "Writing $SYSTEM_ZSHENV (root)"
     tmp="$(mktemp)"
     [ -f "$SYSTEM_ZSHENV" ] && sudo_do cp "$SYSTEM_ZSHENV" "$tmp" || true
-    if [ -f "$tmp" ]; then sed -i "\|^$ZDOTDIR_LINE\$|d" "$tmp"; fi
+    if [ -f "$tmp" ]; then
+      sed -i "\|^$ZDOTDIR_LINE\$|d" "$tmp"
+    fi
     printf "%s\n" "$ZDOTDIR_LINE" >>"$tmp"
-    sudo_do install -m 0644 "$tmp" "$SYSTEM_ZSHENV"
+
+    # ensure /etc/zsh exists, then write the file
+    sudo_do install -D -m 0644 "$tmp" "$SYSTEM_ZSHENV"
+
     rm -f "$tmp"
   else
     msg "$SYSTEM_ZSHENV already sets ZDOTDIR"
