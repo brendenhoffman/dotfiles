@@ -61,29 +61,22 @@ function M.bootstrap()
 			table.insert(missing, name)
 		end
 	end
-
 	if #missing == 0 then
 		UI.add("coc.nvim", vim.log.levels.INFO, { ("All %d extensions present ✓"):format(#wanted) })
 		return
 	end
 
-	local cmd = {
-		"nvim",
-		"--headless",
-		"CocInstall",
-		"-sync",
-		unpack(missing),
-		"+qall",
-	}
+	-- Build a single ex command string
+	local ex = "CocInstall -sync " .. table.concat(missing, " ")
 
-	local out, err, code
+	local code, out, err
 	if vim.system then
-		-- nvim ≥0.10: use new API
-		local res = vim.system(cmd, { text = true }):wait()
-		out, err, code = res.stdout, res.stderr, res.code
+		local res = vim.system({ "nvim", "--headless", "-c", ex, "-c", "qall" }, { text = true }):wait()
+		code, out, err = res.code, res.stdout, res.stderr
 	else
-		-- fallback for older nvim: blocking system()
-		out = vim.fn.systemlist(table.concat(cmd, " "))
+		-- fallback for older nvim
+		local cmd = 'nvim --headless -c "' .. ex .. '" -c "qall"'
+		out = vim.fn.systemlist(cmd)
 		code = vim.v.shell_error
 		err = {}
 	end
@@ -92,7 +85,7 @@ function M.bootstrap()
 		UI.add("coc.nvim", vim.log.levels.INFO, { "Installed: " .. table.concat(missing, ", ") })
 	else
 		UI.add("coc.nvim", vim.log.levels.WARN, {
-			"CocInstall exit code " .. code,
+			"CocInstall exit code " .. tostring(code),
 			(type(err) == "string" and err or table.concat(err, " ")),
 		})
 	end
