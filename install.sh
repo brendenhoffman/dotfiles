@@ -204,13 +204,13 @@ EOF
 arch_install_base() {
   local pm="pacman"
   have paru && pm="paru"
-  $pm -S --needed --noconfirm zsh git neovim ripgrep fzf curl bat || true
+  $pm -S --needed --noconfirm zsh git neovim ripgrep fzf curl bat cmake || true
   $pm -S --needed --noconfirm zsh-theme-powerlevel10k zsh-autosuggestions zsh-syntax-highlighting || true
   $pm -S --needed --noconfirm fzf-tab-git || true
 }
 
 debian_install_base() {
-  sudo_do apt install -y zsh git neovim ripgrep fzf curl bat || true
+  sudo_do apt install -y zsh git neovim ripgrep fzf curl bat build-essential cmake || true
 }
 
 debian_install_or_clone_zsh_plugins() {
@@ -325,7 +325,7 @@ arch_install_dev_tools() {
   local pm="pacman"
   have paru && pm="paru"
   msg "Installing developer tools (Arch, packages only)"
-  $pm -S --needed --noconfirm stylua shfmt jq taplo sqlfluff prettier php-codesniffer clang ripgrep bat yamlfmt python-black cmake python-isort || true
+  $pm -S --needed --noconfirm stylua shfmt jq taplo sqlfluff prettier php-codesniffer clang ripgrep bat yamlfmt python-black python-isort || true
 }
 
 debian_dev_tools_notify_and_yamlfmt() {
