@@ -205,13 +205,13 @@ EOF
 arch_install_base() {
   local pm="pacman"
   have paru && pm="paru"
-  $pm -S --needed --noconfirm zsh git neovim ripgrep fzf curl bat || true
+  $pm -S --needed --noconfirm zsh git neovim ripgrep fzf curl bat nodejs npm || true
   $pm -S --needed --noconfirm powerlevel10k zsh-autosuggestions zsh-syntax-highlighting || true
   $pm -S --needed --noconfirm fzf-tab-git || true
 }
 
 debian_install_base() {
-  sudo_do apt install -y zsh git neovim ripgrep fzf curl bat || true
+  sudo_do apt install -y zsh git neovim ripgrep fzf curl bat nodejs npm || true
 }
 
 debian_install_or_clone_zsh_plugins() {
@@ -307,6 +307,17 @@ ensure_vim_plug() {
   curl -fsSL https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim -o "$plug"
 }
 
+build_coc() {
+  local coc_dir="$HOME/.local/share/nvim/plugged/coc.nvim"
+  if [ -d "$coc_dir" ]; then
+    msg "Building coc.nvim (npm ci)"
+    (cd "$coc_dir" && npm ci --ignore-scripts --no-audit --no-fund) ||
+      warn "coc.nvim build failed; run manually: (cd $coc_dir && npm ci)"
+  else
+    warn "coc.nvim not installed; skipping build"
+  fi
+}
+
 bootstrap_nvim() {
   if ! have nvim; then
     warn "Neovim not installed; skipping bootstrap"
@@ -316,10 +327,10 @@ bootstrap_nvim() {
   ensure_vim_plug
 
   msg "Running PlugInstall (headless)"
-  # install plugins; --sync waits for jobs to finish
   nvim --headless +'silent! PlugInstall --sync' +qa || true
 
-  # if you have a custom :BootstrapAll user command, only run it if it exists
+  build_coc
+
   msg "Running BootstrapAll (if defined)"
   nvim --headless +':lua if vim.fn.exists(":BootstrapAll")==2 then vim.cmd("silent! BootstrapAll") end' +qa || true
 }
