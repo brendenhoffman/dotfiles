@@ -148,7 +148,7 @@ debian_offer_system_upgrade_nonfatal() {
   fi
 }
 
-# Chaotic-aur + paru bootstrap (unchanged logic, kept here for convenience)
+# Chaotic-aur + paru bootstrap
 
 arch_setup_chaotic_and_paru() {
   command -v pacman >/dev/null 2>&1 || return
@@ -177,6 +177,7 @@ Include = /etc/pacman.d/chaotic-mirrorlist
 EOF
 
       msg "chaotic-aur enabled"
+      sudo_do pacman -Sy
     else
       warn "Skipped chaotic-aur enablement"
     fi
