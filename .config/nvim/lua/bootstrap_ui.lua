@@ -9,12 +9,26 @@ local function lvl_name(lvl)
 	return map[lvl] or "INFO"
 end
 
-function M.add(title, level, lines)
+-- NEW: split any multi-line strings into individual lines
+local function normalize_lines(lines)
 	if type(lines) == "string" then
 		lines = { lines }
 	end
-	table.insert(M.entries, { title = title, level = level or vim.log.levels.INFO, lines = lines or {} })
-	if level == vim.log.levels.WARN or level == vim.log.levels.ERROR then
+	local out = {}
+	for _, s in ipairs(lines or {}) do
+		s = type(s) == "string" and s or vim.inspect(s)
+		for _, piece in ipairs(vim.split(s, "\n", { plain = true })) do
+			table.insert(out, piece)
+		end
+	end
+	return out
+end
+
+function M.add(title, level, lines)
+	local lvl = level or vim.log.levels.INFO
+	local flat = normalize_lines(lines)
+	table.insert(M.entries, { title = title, level = lvl, lines = flat })
+	if lvl == vim.log.levels.WARN or lvl == vim.log.levels.ERROR then
 		M.have_warn = true
 	end
 end
@@ -38,8 +52,6 @@ function M.open()
 	vim.bo[buf].buftype = "nofile"
 	vim.bo[buf].bufhidden = "wipe"
 	vim.bo[buf].filetype = "markdown"
-
-	-- show in a right split
 	vim.cmd("vsplit")
 	vim.api.nvim_win_set_buf(0, buf)
 end
