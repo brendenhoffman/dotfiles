@@ -92,7 +92,7 @@ function M.bootstrap(opts)
 		local _ = vim.fn.system(cmd)
 		local code = vim.v.shell_error
 		if code == 0 then
-			UI.add("coc.nvim", vim.log.levels.INFO, { "Installed: " .. table.concat(missing, ", ") })
+			UI.add("coc.nvim", vim.log.levels.WARN, { "Installed: " .. table.concat(missing, ", ") })
 		else
 			UI.add("coc.nvim", vim.log.levels.WARN, { "CocInstall exit code " .. code })
 		end
@@ -102,7 +102,7 @@ function M.bootstrap(opts)
 		if vim.system then
 			vim.system({ "nvim", "--headless", "-c", ex, "-c", "qall" }, { text = true }, function(res)
 				if res.code == 0 then
-					UI.add("coc.nvim", vim.log.levels.INFO, { "Installed: " .. table.concat(missing, ", ") })
+					UI.add("coc.nvim", vim.log.levels.WARN, { "Installed: " .. table.concat(missing, ", ") })
 				else
 					UI.add("coc.nvim", vim.log.levels.WARN, {
 						"CocInstall exit code " .. tostring(res.code),
@@ -115,7 +115,7 @@ function M.bootstrap(opts)
 			vim.fn.jobstart({ "nvim", "--headless", "-c", ex, "-c", "qall" }, {
 				on_exit = function(_, code)
 					if code == 0 then
-						UI.add("coc.nvim", vim.log.levels.INFO, { "Installed: " .. table.concat(missing, ", ") })
+						UI.add("coc.nvim", vim.log.levels.WARN, { "Installed: " .. table.concat(missing, ", ") })
 					else
 						UI.add("coc.nvim", vim.log.levels.WARN, { "CocInstall exit code " .. code })
 					end
