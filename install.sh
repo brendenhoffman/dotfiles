@@ -233,7 +233,7 @@ arch_install_base() {
   local pm="pacman"
   have paru && pm="paru"
   $pm -S --needed --noconfirm zsh zoxide git neovim ripgrep fzf curl bat cmake || true
-  $pm -S --needed --noconfirm ttf-meslo-nerd-font-powerlevel10k zsh-theme-powerlevel10k zsh-autosuggestions zsh-syntax-highlighting || true
+  $pm -S --needed --noconfirm ttf-meslo-nerd-font-powerlevel10k zsh-theme-powerlevel10k zsh-autosuggestions zsh-syntax-highlighting zsh-history-substring-search-git || true
   $pm -S --needed --noconfirm fzf-tab-git || true
 }
 
