@@ -24,14 +24,11 @@ Plug("kylechui/nvim-surround")
 Plug("stevearc/conform.nvim")
 
 -- Completion
-Plug('neoclide/coc.nvim', { ['branch'] = 'release' })
+Plug("neoclide/coc.nvim", { ["branch"] = "release" })
 
 -- Git / pickers
 Plug("nvim-telescope/telescope.nvim", { ["tag"] = "0.1.8" })
-Plug(
-	"nvim-telescope/telescope-fzf-native.nvim",
-	{ ["do"] = "cmake -S. -Bbuild -DCMAKE_BUILD_TYPE=Release && cmake --build build --config Release" }
-)
+Plug("nvim-telescope/telescope-fzf-native.nvim", { ["do"] = "make" })
 Plug("folke/which-key.nvim")
 
 -- IDE panel
