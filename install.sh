@@ -339,7 +339,7 @@ arch_install_dev_tools() {
   local pm="pacman"
   have paru && pm="paru"
   msg "Installing developer tools (Arch, packages only)"
-  $pm -S --needed --noconfirm stylua shfmt jq taplo sqlfluff prettier php-code-sniffer clang ripgrep bat yamlfmt || true
+  $pm -S --needed --noconfirm stylua shfmt jq taplo sqlfluff prettier php-codesniffer clang ripgrep bat yamlfmt || true
 }
 
 debian_dev_tools_notify_and_yamlfmt() {
