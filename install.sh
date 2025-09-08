@@ -45,26 +45,40 @@ ensure_git_early() {
 }
 
 ensure_repo() {
+  local remote="${DOTFILES_REMOTE:-https://github.com/brendenhoffman/dotfiles.git}"
+  local branch="${DOTFILES_BRANCH:-main}"
+
   if [ ! -d "$REPO_DIR/.git" ]; then
     msg "Cloning dotfiles into $REPO_DIR"
     mkdir -p "$(dirname "$REPO_DIR")"
-    git clone "${DOTFILES_REMOTE:-https://github.com/brendenhoffman/dotfiles.git}" "$REPO_DIR"
-  else
-    msg "Repo exists at $REPO_DIR"
+    git clone --branch "$branch" "$remote" "$REPO_DIR" ||
+      {
+        err "Clone failed"
+        exit 1
+      }
+    return
+  fi
 
-    # check for uncommitted local changes
-    if [ -n "$(git -C "$REPO_DIR" status --porcelain)" ]; then
-      warn "Local changes detected in $REPO_DIR"
-      if ! ask "Continue and update anyway (your changes may be lost)?"; then
-        msg "Skipping repo update"
-        return
-      fi
-    fi
+  msg "Repo exists at $REPO_DIR"
 
-    msg "Updating repo at $REPO_DIR"
-    if ! git -C "$REPO_DIR" pull --ff-only; then
-      warn "Repo update failed (non-fast-forward or network error); keeping existing copy"
+  # Detect uncommitted changes and force a choice
+  if [ -n "$(git -C "$REPO_DIR" status --porcelain)" ]; then
+    warn "Local changes detected in $REPO_DIR"
+    if ask "Proceed and temporarily stash your local changes to update from origin/$branch?"; then
+      (cd "$REPO_DIR" && git stash push -u -m "install.sh auto-stash $(date -Iseconds)") || true
+    else
+      err "Aborting per your choice. Resolve local changes, then re-run."
+      exit 1
     fi
+  fi
+
+  # Update (fast-forward only)
+  msg "Updating repo (origin/$branch)"
+  git -C "$REPO_DIR" fetch --prune --tags || warn "Fetch failed; attempting pull anyway"
+  git -C "$REPO_DIR" checkout -q "$branch" 2>/dev/null || git -C "$REPO_DIR" checkout -qb "$branch"
+  if ! git -C "$REPO_DIR" pull --ff-only origin "$branch"; then
+    err "Non-fast-forward or update failed; resolve manually and re-run."
+    exit 1
   fi
 }
 
