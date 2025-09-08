@@ -9,15 +9,12 @@ local function wanted_from_langs()
 	if not ok_ext then
 		ext = { coc_by_lang = {} }
 	end
-
 	local set = {}
 	for _, l in ipairs(langs) do
 		for _, extname in ipairs(ext.coc_by_lang[l] or {}) do
 			set[extname] = true
 		end
 	end
-
-	-- optional static extras
 	local listfile = vim.fn.stdpath("config") .. "/coc-extensions.txt"
 	if vim.fn.filereadable(listfile) == 1 then
 		for _, line in ipairs(vim.fn.readfile(listfile)) do
@@ -46,7 +43,58 @@ local function read_installed()
 	return have
 end
 
-function M.bootstrap()
+-- Run CocInstall in a child nvim. If opts.sync = true, block (for headless installer).
+local function run_coc_install(missing, opts)
+	opts = opts or {}
+	local UI = require("bootstrap_ui")
+	local ex = "CocInstall -sync " .. table.concat(missing, " ")
+
+	if opts.sync then
+		-- headless/CI: block until done
+		local cmd = 'nvim --headless -c "' .. ex .. '" -c "qall"'
+		local _ = vim.fn.system(cmd)
+		local code = vim.v.shell_error
+		if code == 0 then
+			UI.add("coc.nvim", vim.log.levels.INFO, { "Installed: " .. table.concat(missing, ", ") })
+		else
+			UI.add("coc.nvim", vim.log.levels.WARN, { "CocInstall exit code " .. code })
+		end
+		return
+	end
+
+	-- interactive: async, non-blocking
+	if vim.system then
+		vim.system({ "nvim", "--headless", "-c", ex, "-c", "qall" }, { text = true }, function(res)
+			if res.code == 0 then
+				UI.add("coc.nvim", vim.log.levels.INFO, { "Installed: " .. table.concat(missing, ", ") })
+			else
+				UI.add("coc.nvim", vim.log.levels.WARN, {
+					"CocInstall exit code " .. tostring(res.code),
+					(res.stderr or ""):gsub("%s+$", ""),
+				})
+			end
+			-- optionally: refresh quickfix panel
+			pcall(require("bootstrap_ui").update_quickfix)
+		end)
+	else
+		vim.fn.jobstart({ "nvim", "--headless", "-c", ex, "-c", "qall" }, {
+			on_exit = function(_, code)
+				if code == 0 then
+					require("bootstrap_ui").add(
+						"coc.nvim",
+						vim.log.levels.INFO,
+						{ "Installed: " .. table.concat(missing, ", ") }
+					)
+				else
+					require("bootstrap_ui").add("coc.nvim", vim.log.levels.WARN, { "CocInstall exit code " .. code })
+				end
+				pcall(require("bootstrap_ui").update_quickfix)
+			end,
+		})
+	end
+end
+
+function M.bootstrap(opts)
 	local UI = require("bootstrap_ui")
 	local wanted = wanted_from_langs()
 	if #wanted == 0 then
@@ -61,34 +109,13 @@ function M.bootstrap()
 			table.insert(missing, name)
 		end
 	end
+
 	if #missing == 0 then
 		UI.add("coc.nvim", vim.log.levels.INFO, { ("All %d extensions present ✓"):format(#wanted) })
 		return
 	end
 
-	-- Build a single ex command string
-	local ex = "CocInstall -sync " .. table.concat(missing, " ")
-
-	local code, out, err
-	if vim.system then
-		local res = vim.system({ "nvim", "--headless", "-c", ex, "-c", "qall" }, { text = true }):wait()
-		code, out, err = res.code, res.stdout, res.stderr
-	else
-		-- fallback for older nvim
-		local cmd = 'nvim --headless -c "' .. ex .. '" -c "qall"'
-		out = vim.fn.systemlist(cmd)
-		code = vim.v.shell_error
-		err = {}
-	end
-
-	if code == 0 then
-		UI.add("coc.nvim", vim.log.levels.INFO, { "Installed: " .. table.concat(missing, ", ") })
-	else
-		UI.add("coc.nvim", vim.log.levels.WARN, {
-			"CocInstall exit code " .. tostring(code),
-			(type(err) == "string" and err or table.concat(err, " ")),
-		})
-	end
+	run_coc_install(missing, opts)
 end
 
 vim.g.coc_disable_progress = 1
