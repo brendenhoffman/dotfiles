@@ -51,6 +51,20 @@ ensure_repo() {
     git clone "${DOTFILES_REMOTE:-https://github.com/brendenhoffman/dotfiles.git}" "$REPO_DIR"
   else
     msg "Repo exists at $REPO_DIR"
+
+    # check for uncommitted local changes
+    if [ -n "$(git -C "$REPO_DIR" status --porcelain)" ]; then
+      warn "Local changes detected in $REPO_DIR"
+      if ! ask "Continue and update anyway (your changes may be lost)?"; then
+        msg "Skipping repo update"
+        return
+      fi
+    fi
+
+    msg "Updating repo at $REPO_DIR"
+    if ! git -C "$REPO_DIR" pull --ff-only; then
+      warn "Repo update failed (non-fast-forward or network error); keeping existing copy"
+    fi
   fi
 }
 
