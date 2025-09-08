@@ -67,12 +67,34 @@ function M.bootstrap()
 		return
 	end
 
-	-- RUN SYNCHRONOUSLY in the current nvim, headless-safe
-	local ok = pcall(vim.cmd, "CocInstall -sync " .. table.concat(missing, " "))
-	if ok then
+	local cmd = {
+		"nvim",
+		"--headless",
+		"CocInstall",
+		"-sync",
+		unpack(missing),
+		"+qall",
+	}
+
+	local out, err, code
+	if vim.system then
+		-- nvim ≥0.10: use new API
+		local res = vim.system(cmd, { text = true }):wait()
+		out, err, code = res.stdout, res.stderr, res.code
+	else
+		-- fallback for older nvim: blocking system()
+		out = vim.fn.systemlist(table.concat(cmd, " "))
+		code = vim.v.shell_error
+		err = {}
+	end
+
+	if code == 0 then
 		UI.add("coc.nvim", vim.log.levels.INFO, { "Installed: " .. table.concat(missing, ", ") })
 	else
-		UI.add("coc.nvim", vim.log.levels.WARN, { "CocInstall failed (see :CocOpenLog)" })
+		UI.add("coc.nvim", vim.log.levels.WARN, {
+			"CocInstall exit code " .. code,
+			(type(err) == "string" and err or table.concat(err, " ")),
+		})
 	end
 end
 
