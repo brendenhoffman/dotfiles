@@ -1,4 +1,12 @@
-local M = { entries = {}, have_warn = false }
+local M = { entries = {}, have_warn = false, _opened = false }
+
+function M.ensure_open()
+	if M._opened then
+		return
+	end
+	M._opened = true
+	M.open()
+end
 
 local function lvl_name(lvl)
 	local map = {
