@@ -149,7 +149,6 @@ debian_offer_system_upgrade_nonfatal() {
 }
 
 # Chaotic-aur + paru bootstrap
-
 arch_setup_chaotic_and_paru() {
   command -v pacman >/dev/null 2>&1 || return
 
@@ -205,13 +204,13 @@ EOF
 arch_install_base() {
   local pm="pacman"
   have paru && pm="paru"
-  $pm -S --needed --noconfirm zsh git neovim ripgrep fzf curl bat nodejs npm || true
+  $pm -S --needed --noconfirm zsh git neovim ripgrep fzf curl bat || true
   $pm -S --needed --noconfirm zsh-theme-powerlevel10k zsh-autosuggestions zsh-syntax-highlighting || true
   $pm -S --needed --noconfirm fzf-tab-git || true
 }
 
 debian_install_base() {
-  sudo_do apt install -y zsh git neovim ripgrep fzf curl bat nodejs npm || true
+  sudo_do apt install -y zsh git neovim ripgrep fzf curl bat || true
 }
 
 debian_install_or_clone_zsh_plugins() {
@@ -307,17 +306,6 @@ ensure_vim_plug() {
   curl -fsSL https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim -o "$plug"
 }
 
-build_coc() {
-  local coc_dir="$HOME/.local/share/nvim/plugged/coc.nvim"
-  if [ -d "$coc_dir" ]; then
-    msg "Building coc.nvim (npm ci)"
-    (cd "$coc_dir" && npm ci --ignore-scripts --no-audit --no-fund) ||
-      warn "coc.nvim build failed; run manually: (cd $coc_dir && npm ci)"
-  else
-    warn "coc.nvim not installed; skipping build"
-  fi
-}
-
 bootstrap_nvim() {
   if ! have nvim; then
     warn "Neovim not installed; skipping bootstrap"
@@ -328,8 +316,6 @@ bootstrap_nvim() {
 
   msg "Running PlugInstall (headless)"
   nvim --headless +'silent! PlugInstall --sync' +qa || true
-
-  build_coc
 
   msg "Running BootstrapAll (if defined)"
   nvim --headless +':lua if vim.fn.exists(":BootstrapAll")==2 then vim.cmd("silent! BootstrapAll") end' +qa || true
@@ -343,12 +329,12 @@ arch_install_dev_tools() {
 }
 
 debian_dev_tools_notify_and_yamlfmt() {
-  msg "Developer tools (Debian): notifying only (except yamlfmt)"
+  msg "Developer tools (Debian): notifying only (yamlfmt is required and will be installed)"
   echo " - stylua: apt install stylua (or build)"
   echo " - shfmt:  apt install shfmt"
   echo " - isort:  apt install python3-isort or pipx/pip"
   echo " - black:  apt install black or pipx/pip"
-  echo " - prettier: npm i -g prettier"
+  echo " - prettier: optional; requires nodejs+npm"
   echo " - jq: apt install jq"
   echo " - taplo: cargo install taplo-cli (or binary release)"
   echo " - sqlfluff: pipx/pip install sqlfluff"
@@ -357,18 +343,30 @@ debian_dev_tools_notify_and_yamlfmt() {
   echo " - rustfmt: rustup component add rustfmt"
   echo " - ripgrep: apt install ripgrep"
   echo " - bat: apt install bat"
-  if ! have yamlfmt; then
-    msg "Installing yamlfmt (Go)"
-    if ! have go; then sudo_do apt install -y golang || {
-      warn "Go install failed; cannot install yamlfmt"
-      return
-    }; fi
-    GOBIN="$HOME/.local/bin" go install github.com/google/yamlfmt/cmd/yamlfmt@latest || warn "yamlfmt install failed"
-    grep -q '\$HOME/.local/bin' "$HOME/.profile" 2>/dev/null || printf '%s\n' 'export PATH=$HOME/.local/bin:$PATH' >>"$HOME/.profile"
-    msg "yamlfmt installed to ~/.local/bin"
-  else
-    msg "yamlfmt already installed"
+
+  # yamlfmt is required, always install/update
+  msg "Installing yamlfmt (Go)"
+  if ! have go; then
+    sudo_do apt install -y golang || {
+      err "Failed to install Go; yamlfmt cannot be installed"
+      return 1
+    }
   fi
+
+  mkdir -p "$HOME/.local/bin"
+  export GOPATH="$HOME/.local/share/go"
+  GOBIN="$HOME/.local/bin" go install github.com/google/yamlfmt/cmd/yamlfmt@latest ||
+    {
+      err "yamlfmt install failed"
+      return 1
+    }
+
+  if ! printf '%s' "$PATH" | grep -q "$HOME/.local/bin"; then
+    warn "~/.local/bin is not on PATH. Add this to your zsh profile (e.g. ~/.config/zsh/.zprofile):"
+    echo '  export PATH="$HOME/.local/bin:$PATH"'
+  fi
+
+  msg "yamlfmt installed to ~/.local/bin"
 }
 
 ensure_rustfmt() {
@@ -376,6 +374,9 @@ ensure_rustfmt() {
     warn "rustup not installed; skipping rustfmt setup"
     return
   fi
+
+  export RUSTUP_HOME="$HOME/.local/share/rustup"
+  export CARGO_HOME="$HOME/.local/sahre/cargo"
 
   # if no default toolchain yet, install/set stable
   if ! rustup show active-toolchain >/dev/null 2>&1; then
@@ -396,14 +397,6 @@ deploy_scripts() {
     return
   }
   mkdir -p "$LOCAL_BIN"
-
-  # ensure ~/.local/bin is on PATH (idempotent)
-  if ! printf '%s' "$PATH" | grep -q "$HOME/.local/bin"; then
-    if ! grep -q 'export PATH=\$HOME/.local/bin:\$PATH' "$HOME/.profile" 2>/dev/null; then
-      printf '%s\n' 'export PATH=$HOME/.local/bin:$PATH' >>"$HOME/.profile"
-      msg "Added ~/.local/bin to PATH via ~/.profile (relog to take effect)"
-    fi
-  fi
 
   # link every executable file under scripts/, by basename
   while IFS= read -r rel; do

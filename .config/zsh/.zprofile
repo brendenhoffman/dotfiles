@@ -23,6 +23,8 @@ export RUSTUP_HOME="$XDG_DATA_HOME/rustup"
 export GRADLE_USER_HOME="$XDG_DATA_HOME/gradle"
 export NPM_CONFIG_USERCONFIG="$XDG_CONFIG_HOME/npm/npmrc"
 export JAVA_TOOL_OPTIONS="-Djava.util.prefs.userRoot=$XDG_CONFIG_HOME/java"
+export GOPATH="$XDG_DATA_HOME/go"
+export GOBIN="$HOME/.local/bin"
 
 # Crypto / desktop
 export GNUPGHOME="$XDG_DATA_HOME/gnupg"

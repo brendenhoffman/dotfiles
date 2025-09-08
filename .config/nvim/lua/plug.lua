@@ -24,7 +24,7 @@ Plug("kylechui/nvim-surround")
 Plug("stevearc/conform.nvim")
 
 -- Completion
-Plug("neoclide/coc.nvim", { ["branch"] = "master", ["do"] = "npm ci" })
+Plug('neoclide/coc.nvim', { ['branch'] = 'release' })
 
 -- Git / pickers
 Plug("nvim-telescope/telescope.nvim", { ["tag"] = "0.1.8" })
