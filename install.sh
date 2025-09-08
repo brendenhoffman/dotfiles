@@ -24,6 +24,7 @@ have() { command -v "$1" >/dev/null 2>&1; }
 sudo_do() { if [ "$(id -u)" -eq 0 ]; then "$@"; else sudo "$@"; fi; }
 msg() { printf "\033[1;36m==>\033[0m %s\n" "$*"; }
 warn() { printf "\033[1;33m!!\033[0m %s\n" "$*"; }
+err() { printf 'ERROR: %s\n' "$*" >&2; }
 ask() {
   local p="${1:-Proceed?} [Y/n] "
   read -rp "$p" a || true
@@ -241,6 +242,20 @@ debian_install_base() {
   sudo_do apt install -y zsh git neovim ripgrep fzf curl bat build-essential cmake || true
 }
 
+ensure_p10k_fonts() {
+  local dest="$HOME/.local/share/fonts"
+  mkdir -p "$dest"
+  msg "Installing MesloLGS Nerd Fonts (P10k)"
+  for f in "MesloLGS NF Regular.ttf" "MesloLGS NF Bold.ttf" "MesloLGS NF Italic.ttf" "MesloLGS NF Bold Italic.ttf"; do
+    curl -fsSL -o "$dest/$f" \
+      "https://raw.githubusercontent.com/romkatv/powerlevel10k-media/master/$f" || {
+      warn "Failed to fetch $f"
+    }
+  done
+  fc-cache -f "$dest" >/dev/null 2>&1 || true
+  msg "Fonts installed. Set your terminal font to 'MesloLGS NF'"
+}
+
 debian_install_or_clone_zsh_plugins() {
   local need_clone=()
   sudo_do apt install -y zsh-autosuggestions zsh-syntax-highlighting zsh-theme-powerlevel10k || true
@@ -250,6 +265,7 @@ debian_install_or_clone_zsh_plugins() {
     need_clone+=("https://github.com/romkatv/powerlevel10k.git|powerlevel10k")
   fi
   need_clone+=("https://github.com/Aloxaf/fzf-tab.git|fzf-tab")
+  need_clone+=("https://github.com/zsh-users/zsh-history-substring-search.git|zsh-history-substring-search")
   if [ "${#need_clone[@]}" -gt 0 ]; then
     mkdir -p "$USER_PLUGINS"
     for entry in "${need_clone[@]}"; do
@@ -373,28 +389,47 @@ debian_dev_tools_notify_and_yamlfmt() {
   echo " - bat: apt install bat"
 
   # yamlfmt is required, always install/update
-  msg "Installing yamlfmt (Go)"
-  if ! have go; then
-    sudo_do apt install -y golang || {
-      err "Failed to install Go; yamlfmt cannot be installed"
-      return 1
-    }
+  msg "Ensuring yamlfmt (binary)"
+
+  if command -v yamlfmt >/dev/null 2>&1; then
+    msg "yamlfmt already installed: $(command -v yamlfmt)"
+    return
   fi
 
-  mkdir -p "$HOME/.local/bin"
-  export GOPATH="$HOME/.local/share/go"
-  GOBIN="$HOME/.local/bin" go install github.com/google/yamlfmt/cmd/yamlfmt@latest ||
-    {
-      err "yamlfmt install failed"
-      return 1
-    }
+  local dest="$HOME/.local/bin"
+  mkdir -p "$dest"
 
-  if ! printf '%s' "$PATH" | grep -q "$HOME/.local/bin"; then
-    warn "~/.local/bin is not on PATH. Add this to your zsh profile (e.g. ~/.config/zsh/.zprofile):"
-    echo '  export PATH="$HOME/.local/bin:$PATH"'
+  # detect arch
+  case "$(uname -m)" in
+  x86_64) arch="x86_64" ;;
+  aarch64 | arm64) arch="arm64" ;;
+  *)
+    err "Unsupported arch $(uname -m)"
+    return 1
+    ;;
+  esac
+
+  # detect latest release tag (requires curl + jq)
+  local version
+  version="$(curl -fsSL https://api.github.com/repos/google/yamlfmt/releases/latest |
+    grep '"tag_name":' |
+    sed -E 's/.*"v?([^"]+)".*/\1/')"
+
+  if [ -z "$version" ]; then
+    err "Could not detect latest yamlfmt release"
+    return 1
   fi
 
-  msg "yamlfmt installed to ~/.local/bin"
+  local url="https://github.com/google/yamlfmt/releases/download/v${version}/yamlfmt_${version}_Linux_${arch}.tar.gz"
+  msg "Downloading $url"
+
+  curl -fsSL "$url" | tar -xz -C "$dest" yamlfmt || {
+    err "Failed to install yamlfmt"
+    return 1
+  }
+
+  chmod +x "$dest/yamlfmt"
+  msg "yamlfmt ${version} installed to $dest/yamlfmt"
 }
 
 ensure_rustfmt() {
