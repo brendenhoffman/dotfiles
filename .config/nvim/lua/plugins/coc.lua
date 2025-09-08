@@ -1,5 +1,11 @@
 local M = {}
 
+local function coc_config_dir()
+	local xdg = vim.env.XDG_CONFIG_HOME
+	local base = (xdg and #xdg > 0) and xdg or vim.fn.expand("~/.config")
+	return base .. "/coc"
+end
+
 local function wanted_from_langs()
 	local ok_langs, langs = pcall(require, "langs")
 	if not ok_langs then
@@ -10,11 +16,14 @@ local function wanted_from_langs()
 		ext = { coc_by_lang = {} }
 	end
 	local set = {}
+
 	for _, l in ipairs(langs) do
 		for _, extname in ipairs(ext.coc_by_lang[l] or {}) do
 			set[extname] = true
 		end
 	end
+
+	-- optional static extras
 	local listfile = vim.fn.stdpath("config") .. "/coc-extensions.txt"
 	if vim.fn.filereadable(listfile) == 1 then
 		for _, line in ipairs(vim.fn.readfile(listfile)) do
@@ -27,7 +36,10 @@ local function wanted_from_langs()
 end
 
 local function read_installed()
-	local pkg = vim.fn.stdpath("config") .. "/coc/extensions/package.json"
+	local pkg = coc_config_dir() .. "/extensions/package.json"
+	if vim.fn.filereadable(pkg) ~= 1 then
+		return {}
+	end
 	local ok, json = pcall(vim.fn.readfile, pkg)
 	if not ok then
 		return {}
@@ -49,7 +61,7 @@ end
 
 function M.bootstrap(opts)
 	opts = opts or {}
-	-- if headless, force sync even if user didn’t pass it
+	-- if headless, force sync
 	local sync = opts.sync or is_headless()
 	local UI = require("bootstrap_ui")
 
