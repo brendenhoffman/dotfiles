@@ -206,7 +206,7 @@ arch_install_base() {
   local pm="pacman"
   have paru && pm="paru"
   $pm -S --needed --noconfirm zsh git neovim ripgrep fzf curl bat nodejs npm || true
-  $pm -S --needed --noconfirm powerlevel10k zsh-autosuggestions zsh-syntax-highlighting || true
+  $pm -S --needed --noconfirm zsh-theme-powerlevel10k zsh-autosuggestions zsh-syntax-highlighting || true
   $pm -S --needed --noconfirm fzf-tab-git || true
 }
 
