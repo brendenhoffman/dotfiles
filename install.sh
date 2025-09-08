@@ -309,12 +309,7 @@ arch_install_dev_tools() {
   local pm="pacman"
   have paru && pm="paru"
   msg "Installing developer tools (Arch, packages only)"
-  $pm -S --needed --noconfirm stylua shfmt jq taplo sqlfluff prettier php-code-sniffer clang ripgrep bat || true
-  if ! have rustup; then
-    warn "rustup not found; rustfmt requires rustup component."
-    if ask "Install rustup?"; then $pm -S --needed --noconfirm rustup || true; fi
-  fi
-  if have rustup; then rustup component add rustfmt || warn "Failed to add rustfmt component"; fi
+  $pm -S --needed --noconfirm stylua shfmt jq taplo sqlfluff prettier php-code-sniffer clang ripgrep bat yamlfmt || true
 }
 
 debian_dev_tools_notify_and_yamlfmt() {
@@ -343,6 +338,25 @@ debian_dev_tools_notify_and_yamlfmt() {
     msg "yamlfmt installed to ~/.local/bin"
   else
     msg "yamlfmt already installed"
+  fi
+}
+
+ensure_rustfmt() {
+  if ! command -v rustup >/dev/null 2>&1; then
+    warn "rustup not installed; skipping rustfmt setup"
+    return
+  fi
+
+  # if no default toolchain yet, install/set stable
+  if ! rustup show active-toolchain >/dev/null 2>&1; then
+    msg "No active Rust toolchain; installing & setting stable"
+    rustup default stable || rustup toolchain install stable
+  fi
+
+  # add rustfmt on the stable toolchain
+  if ! command -v rustfmt >/dev/null 2>&1; then
+    msg "Installing rustfmt component"
+    rustup component add rustfmt --toolchain stable || warn "Failed to add rustfmt"
   fi
 }
 
@@ -422,6 +436,7 @@ main() {
   ensure_system_zshenv
   bootstrap_nvim
   maybe_chsh_to_zsh
+  ensure_rustfmt
   deploy_scripts
 
   msg "Done. Backups (if any): $BACKUP_DIR"
