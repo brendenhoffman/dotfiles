@@ -9,7 +9,7 @@ NEED_LINK_DIRS=(
   ".config/nvim"
 )
 
-ZDOTDIR_LINE='ZDOTDIR=$HOME/.config/zsh'
+ZDOTDIR_LINE='ZDOTDIR=$HOME/.config/zsh' # don't expand this
 SYSTEM_ZSHENV="/etc/zsh/zshenv"
 SYSTEM_ZSH_PLUGINS="/usr/share/zsh/plugins"
 SYSTEM_P10K_THEME="/usr/share/zsh-theme-powerlevel10k"
@@ -149,50 +149,54 @@ debian_offer_system_upgrade_nonfatal() {
 }
 
 # Chaotic-aur + paru bootstrap (unchanged logic, kept here for convenience)
-arch_setup_chaotic_and_paru() {
-  if ! command -v pacman >/dev/null 2>&1; then return; fi
 
-  if ! grep -q '^\[chaotic-aur\]' /etc/pacman.conf 2>/dev/null; then
+arch_setup_chaotic_and_paru() {
+  command -v pacman >/dev/null 2>&1 || return
+
+  # If repo already present, nothing to do
+  if grep -q '^\[chaotic-aur\]' /etc/pacman.conf 2>/dev/null; then
+    msg "chaotic-aur already enabled"
+  else
     if ask "Enable chaotic-aur repository?"; then
+      # Import & locally sign the Chaotic key
       sudo_do pacman-key --recv-key 3056513887B78AEB --keyserver keyserver.ubuntu.com || true
       sudo_do pacman-key --lsign-key 3056513887B78AEB || true
+
+      # Install keyring + mirrorlist directly from the CDN (works before repo exists)
+      if ! sudo_do pacman -U --noconfirm \
+        'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-keyring.pkg.tar.zst' \
+        'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-mirrorlist.pkg.tar.zst'; then
+        warn "Could not install chaotic keyring/mirrorlist from URL"
+      fi
+
+      # Now write the repo block that includes the mirrorlist we just installed
       sudo_do tee -a /etc/pacman.conf >/dev/null <<'EOF'
 
 [chaotic-aur]
 Include = /etc/pacman.d/chaotic-mirrorlist
 EOF
-      if ask "Install chaotic keyring/mirrorlist now?"; then
-        sudo_do pacman -Sy --needed --noconfirm chaotic-keyring chaotic-mirrorlist ||
-          warn "Could not install chaotic keyring/mirrorlist"
-      else
-        warn "Skipping keyring/mirrorlist install; syncing later may be required."
-      fi
+
+      msg "chaotic-aur enabled"
     else
       warn "Skipped chaotic-aur enablement"
     fi
   fi
 
+  # Try to install paru from chaotic-aur, else fall back to AUR
   if ! command -v paru >/dev/null 2>&1; then
-    if grep -q '^\[chaotic-aur\]' /etc/pacman.conf 2>/div/null; then
-      msg "Attempting paru (chaotic-aur)"
-      sudo_do pacman -S --needed --noconfirm paru || warn "paru from chaotic failed"
-    fi
-  fi
-
-  if ! command -v paru >/dev/null 2>&1; then
-    if ask "Build paru-bin from AUR?"; then
-      sudo_do pacman -S --needed --noconfirm base-devel git
-      tmpdir="$(mktemp -d)"
-      trap 'rm -rf "$tmpdir"' EXIT
-      (
-        cd "$tmpdir"
-        git clone https://aur.archlinux.org/paru-bin.git
-        cd paru-bin
-        makepkg -si --noconfirm
-      )
-      msg "paru installed (AUR)"
+    if sudo_do pacman -S --needed --noconfirm paru; then
+      msg "paru installed (chaotic-aur)"
     else
-      warn "Skipping paru install — will use pacman directly."
+      warn "paru from chaotic failed; attempting AUR paru-bin"
+      if ask "Build paru-bin from AUR?"; then
+        sudo_do pacman -S --needed --noconfirm base-devel git
+        tmpdir="$(mktemp -d)"
+        trap 'rm -rf "$tmpdir"' EXIT
+        (cd "$tmpdir" && git clone https://aur.archlinux.org/paru-bin.git && cd paru-bin && makepkg -si --noconfirm)
+        msg "paru installed (AUR)"
+      else
+        warn "Skipping paru install — will use pacman directly."
+      fi
     fi
   fi
 }
