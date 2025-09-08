@@ -295,14 +295,33 @@ maybe_chsh_to_zsh() {
   fi
 }
 
+ensure_vim_plug() {
+  # standard XDG install path for vim-plug
+  local plug="$HOME/.local/share/nvim/site/autoload/plug.vim"
+  if [ -f "$plug" ]; then
+    msg "vim-plug already present"
+    return
+  fi
+  msg "Installing vim-plug to $plug"
+  mkdir -p "$(dirname "$plug")"
+  curl -fsSL https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim -o "$plug"
+}
+
 bootstrap_nvim() {
   if ! have nvim; then
     warn "Neovim not installed; skipping bootstrap"
     return
   fi
-  msg "Running PlugInstall and BootstrapAll (headless)"
-  nvim --headless +":silent PlugInstall" +":silent qall" || true
-  nvim --headless +":BootstrapAll" +":qall" || true
+
+  ensure_vim_plug
+
+  msg "Running PlugInstall (headless)"
+  # install plugins; --sync waits for jobs to finish
+  nvim --headless +'silent! PlugInstall --sync' +qa || true
+
+  # if you have a custom :BootstrapAll user command, only run it if it exists
+  msg "Running BootstrapAll (if defined)"
+  nvim --headless +':lua if vim.fn.exists(":BootstrapAll")==2 then vim.cmd("silent! BootstrapAll") end' +qa || true
 }
 
 arch_install_dev_tools() {
