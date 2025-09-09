@@ -239,7 +239,7 @@ arch_install_base() {
 }
 
 debian_install_base() {
-  sudo_do apt install -y zsh git ripgrep fzf curl bat lsd build-essential cmake || true
+  sudo_do apt install -y zsh git ripgrep fzf curl bat lsd build-essential cmake npm || true
 }
 
 deb_codename() {
@@ -271,7 +271,7 @@ ensure_backports_enabled() {
 
 apt_install_from_backports() {
   local codename="$(deb_codename)" || return 1
-  sudo apt -t "${codename}-backports" install -y nodejs npm golang
+  sudo apt -t "${codename}-backports" install -y nodejs golang
 }
 
 ensure_p10k_fonts() {
@@ -290,7 +290,7 @@ ensure_p10k_fonts() {
 
 debian_install_or_clone_zsh_plugins() {
   local need_clone=()
-  sudo_do apt install -y zsh-autosuggestions zsh-syntax-highlighting || true
+  sudo_do apt install -y zsh-autosuggestions zsh-syntax-highlighting zoxide || true
   [ -d "$SYSTEM_ZSH_PLUGINS/zsh-autosuggestions" ] || need_clone+=("https://github.com/zsh-users/zsh-autosuggestions.git|zsh-autosuggestions")
   [ -d "$SYSTEM_ZSH_PLUGINS/zsh-syntax-highlighting" ] || need_clone+=("https://github.com/zsh-users/zsh-syntax-highlighting.git|zsh-syntax-highlighting")
   if [ ! -d "$SYSTEM_P10K_THEME" ] && [ ! -d "$SYSTEM_ZSH_PLUGINS/powerlevel10k" ]; then
@@ -630,6 +630,77 @@ ensure_neovim_portable() {
   msg "Neovim installed at $dest; symlinked at $bin/nvim"
 }
 
+write_paru_conf() {
+  local cfg="$HOME/.config/paru/paru.conf"
+  if ask "Write ~/.config/paru/paru.conf with your options?"; then
+    mkdir -p "$(dirname "$cfg")"
+    tee "$cfg" >/dev/null <<'EOF'
+[options]
+PgpFetch
+Devel
+Provides
+DevelSuffixes = -git -cvs -svn -bzr -darcs -always
+BottomUp
+RemoveMake = yes
+SkipReview
+BatchInstall
+NewsOnUpgrade
+EOF
+    msg "Wrote $cfg"
+  else
+    warn "Skipping paru.conf"
+  fi
+}
+
+ensure_npm_xdg() {
+  if ! command -v npm >/dev/null 2>&1; then
+    msg "npm not found; skipping npm XDG setup"
+    return 0
+  fi
+
+  # Paths
+  local cfg="${XDG_CONFIG_HOME:-$HOME/.config}/npm"
+  local cache="${XDG_CACHE_HOME:-$HOME/.cache}/npm"
+  local npmrc="$cfg/npmrc"
+
+  # Ensure dirs
+  mkdir -p "$cfg" "$cache" "$HOME/.local/bin" "$HOME/.local/lib"
+
+  # If a legacy ~/.npmrc exists, back it up so the XDG one takes precedence
+  if [ -f "$HOME/.npmrc" ] && [ ! -L "$HOME/.npmrc" ]; then
+    mv "$HOME/.npmrc" "$HOME/.npmrc.bak.$(date +%s)"
+    warn "Backed up legacy ~/.npmrc -> ~/.npmrc.bak.*"
+  fi
+
+  # Write XDG npmrc atomically
+  tmp="$(mktemp)" || {
+    err "mktemp failed"
+    return 1
+  }
+  {
+    printf 'prefix=%s\n' "$HOME/.local"
+    printf 'cache=%s\n' "$cache"
+    # QoL toggles
+    echo 'fund=false'
+    echo 'audit=false'
+  } >"$tmp"
+  mv -f "$tmp" "$npmrc"
+
+  # Apply same config via npm, targeting the XDG file explicitly
+  NPM_CONFIG_USERCONFIG="$npmrc" npm config set prefix "$HOME/.local" >/dev/null 2>&1 || true
+  NPM_CONFIG_USERCONFIG="$npmrc" npm config set cache "$cache" >/dev/null 2>&1 || true
+  # ensure globals land in ~/.local/bin this session
+  case ":$PATH:" in *":$HOME/.local/bin:"*) : ;; *) export PATH="$HOME/.local/bin:$PATH" ;; esac
+
+  # Migrate old ~/.npm cache if present
+  if [ -d "$HOME/.npm" ] && [ ! -e "$cache/_cacache" ]; then
+    msg "Migrating ~/.npm -> $cache"
+    mv "$HOME/.npm" "$cache"
+  fi
+
+  msg "npm configured for XDG (config=$npmrc, cache=$cache, globals=~/.local)"
+}
+
 main() {
   ensure_git_early
   ensure_repo
@@ -643,12 +714,15 @@ main() {
     else
       arch_setup_chaotic_and_paru
       arch_install_base
+      ensure_npm_xdg
+      write_paru_conf
       arch_install_dev_tools
       setup_plugin_links
     fi
   elif have apt; then
     debian_offer_system_upgrade_nonfatal
     debian_install_base
+    ensure_npm_xdg
     ensure_backports_enabled
     apt_install_from_backports
     ensure_neovim_portable
