@@ -233,13 +233,45 @@ EOF
 arch_install_base() {
   local pm="pacman"
   have paru && pm="paru"
-  $pm -S --needed --noconfirm zsh zoxide git neovim ripgrep fzf curl bat cmake || true
+  $pm -S --needed --noconfirm zsh zoxide git neovim ripgrep fzf curl bat cmake nodejs || true
   $pm -S --needed --noconfirm ttf-meslo-nerd-font-powerlevel10k zsh-theme-powerlevel10k zsh-autosuggestions zsh-syntax-highlighting zsh-history-substring-search-git || true
   $pm -S --needed --noconfirm fzf-tab-git || true
 }
 
 debian_install_base() {
-  sudo_do apt install -y zsh git neovim ripgrep fzf curl bat build-essential cmake || true
+  sudo_do apt install -y zsh git ripgrep fzf curl bat build-essential cmake || true
+}
+
+deb_codename() {
+  # returns "bookworm", "bullseye", etc.
+  . /etc/os-release 2>/dev/null || return 1
+  [ -n "$VERSION_CODENAME" ] && {
+    echo "$VERSION_CODENAME"
+    return 0
+  }
+  command -v lsb_release >/dev/null && {
+    lsb_release -sc
+    return 0
+  }
+  return 1
+}
+
+ensure_backports_enabled() {
+  local codename="$(deb_codename)" || {
+    echo "Cannot detect Debian codename"
+    return 1
+  }
+  local file="/etc/apt/sources.list.d/backports.list"
+  if ! grep -qs "^deb .* ${codename}-backports " "$file" 2>/dev/null; then
+    echo "Enabling ${codename}-backports"
+    echo "deb http://deb.debian.org/debian ${codename}-backports main" | sudo tee "$file" >/dev/null
+    sudo apt update
+  fi
+}
+
+apt_install_from_backports() {
+  local codename="$(deb_codename)" || return 1
+  sudo apt -t "${codename}-backports" install -y nodejs golang neovim
 }
 
 ensure_p10k_fonts() {
@@ -258,7 +290,7 @@ ensure_p10k_fonts() {
 
 debian_install_or_clone_zsh_plugins() {
   local need_clone=()
-  sudo_do apt install -y zsh-autosuggestions zsh-syntax-highlighting zsh-theme-powerlevel10k || true
+  sudo_do apt install -y zsh-autosuggestions zsh-syntax-highlighting || true
   [ -d "$SYSTEM_ZSH_PLUGINS/zsh-autosuggestions" ] || need_clone+=("https://github.com/zsh-users/zsh-autosuggestions.git|zsh-autosuggestions")
   [ -d "$SYSTEM_ZSH_PLUGINS/zsh-syntax-highlighting" ] || need_clone+=("https://github.com/zsh-users/zsh-syntax-highlighting.git|zsh-syntax-highlighting")
   if [ ! -d "$SYSTEM_P10K_THEME" ] && [ ! -d "$SYSTEM_ZSH_PLUGINS/powerlevel10k" ]; then
@@ -389,47 +421,28 @@ debian_dev_tools_notify_and_yamlfmt() {
   echo " - bat: apt install bat"
 
   # yamlfmt is required, always install/update
-  msg "Ensuring yamlfmt (binary)"
-
-  if command -v yamlfmt >/dev/null 2>&1; then
-    msg "yamlfmt already installed: $(command -v yamlfmt)"
-    return
+  msg "Installing yamlfmt (Go)"
+  if ! have go; then
+    sudo_do apt install -y golang || {
+      err "Failed to install Go; yamlfmt cannot be installed"
+      return 1
+    }
   fi
 
-  local dest="$HOME/.local/bin"
-  mkdir -p "$dest"
+  mkdir -p "$HOME/.local/bin"
+  export GOPATH="$HOME/.local/share/go"
+  GOBIN="$HOME/.local/bin" go install github.com/google/yamlfmt/cmd/yamlfmt@latest ||
+    {
+      err "yamlfmt install failed"
+      return 1
+    }
 
-  # detect arch
-  case "$(uname -m)" in
-  x86_64) arch="x86_64" ;;
-  aarch64 | arm64) arch="arm64" ;;
-  *)
-    err "Unsupported arch $(uname -m)"
-    return 1
-    ;;
-  esac
-
-  # detect latest release tag (requires curl + jq)
-  local version
-  version="$(curl -fsSL https://api.github.com/repos/google/yamlfmt/releases/latest |
-    grep '"tag_name":' |
-    sed -E 's/.*"v?([^"]+)".*/\1/')"
-
-  if [ -z "$version" ]; then
-    err "Could not detect latest yamlfmt release"
-    return 1
+  if ! printf '%s' "$PATH" | grep -q "$HOME/.local/bin"; then
+    warn "~/.local/bin is not on PATH. Add this to your zsh profile (e.g. ~/.config/zsh/.zprofile):"
+    echo '  export PATH="$HOME/.local/bin:$PATH"'
   fi
 
-  local url="https://github.com/google/yamlfmt/releases/download/v${version}/yamlfmt_${version}_Linux_${arch}.tar.gz"
-  msg "Downloading $url"
-
-  curl -fsSL "$url" | tar -xz -C "$dest" yamlfmt || {
-    err "Failed to install yamlfmt"
-    return 1
-  }
-
-  chmod +x "$dest/yamlfmt"
-  msg "yamlfmt ${version} installed to $dest/yamlfmt"
+  msg "yamlfmt installed to ~/.local/bin"
 }
 
 ensure_rustfmt() {
@@ -439,7 +452,7 @@ ensure_rustfmt() {
   fi
 
   export RUSTUP_HOME="$HOME/.local/share/rustup"
-  export CARGO_HOME="$HOME/.local/sahre/cargo"
+  export CARGO_HOME="$HOME/.local/share/cargo"
 
   # if no default toolchain yet, install/set stable
   if ! rustup show active-toolchain >/dev/null 2>&1; then
@@ -494,6 +507,13 @@ deploy_scripts() {
   done < <(find "$LOCAL_BIN" -maxdepth 1 -type l -print)
 }
 
+mirror_system_zsh_plugins() {
+  link_if_exists /usr/share/zsh-autosuggestions \
+    "$HOME/.local/share/zsh/plugins/zsh-autosuggestions"
+  link_if_exists /usr/share/zsh-syntax-highlighting \
+    "$HOME/.local/share/zsh/plugins/zsh-syntax-highlighting"
+}
+
 main() {
   ensure_git_early
   ensure_repo
@@ -508,17 +528,20 @@ main() {
       arch_setup_chaotic_and_paru
       arch_install_base
       arch_install_dev_tools
+      setup_plugin_links
     fi
   elif have apt; then
     debian_offer_system_upgrade_nonfatal
     debian_install_base
+    ensure_backports_enabled
+    apt_install_from_backports
     debian_install_or_clone_zsh_plugins
     debian_dev_tools_notify_and_yamlfmt
+    mirror_system_zsh_plugins
   else
     warn "Unsupported distro: package steps skipped."
   fi
 
-  setup_plugin_links
   ensure_system_zshenv
   bootstrap_nvim
   maybe_chsh_to_zsh
