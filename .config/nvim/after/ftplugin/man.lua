@@ -1,6 +1,5 @@
 local function pagerize()
 	-- kill numbers and your custom statuscolumn (this removes [RO] too)
-	vim.opt_local.number = false
 	vim.opt_local.relativenumber = false
 	vim.opt_local.signcolumn = "no"
 	vim.opt_local.statuscolumn = ""

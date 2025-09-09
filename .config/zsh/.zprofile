@@ -1,9 +1,11 @@
 export EDITOR="nvim"
 export VISUAL="nvim"
 export SUDO_EDITOR="nvim -Z --noplugin"
+export READER="zathura"
 
 # pager
 export MANPAGER='nvim +Man! -c "setlocal nonumber norelativenumber signcolumn=no statuscolumn="'
+export PAGER='nvim +Man! -c "setlocal number norelativenumber signcolumn=no statuscolumn="'
 
 # Less + colors
 export LESS=-r
