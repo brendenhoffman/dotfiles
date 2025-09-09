@@ -523,44 +523,47 @@ mirror_system_zsh_plugins() {
 }
 
 ensure_neovim_portable() {
-  # require >= 0.9
   if command -v nvim >/dev/null 2>&1; then
     set -- $(nvim --version | sed -n '1s/.* v\([0-9]\+\)\.\([0-9]\+\).*/\1 \2/p')
     [ -n "$1" ] && { [ "$1" -gt 0 ] || { [ "$1" -eq 0 ] && [ "$2" -ge 9 ]; }; } && {
-      echo "Neovim OK: $(nvim --version | head -1)"
+      msg "Neovim OK: $(nvim --version | head -1)"
       return
     }
   fi
 
-  echo "Installing portable Neovim…"
+  msg "Installing portable Neovim…"
   mkdir -p "$HOME/.local/opt" "$HOME/.local/bin"
-  # fetch latest tag
+
+  # detect latest release
+  local tag
   tag="$(curl -fsSL https://api.github.com/repos/neovim/neovim/releases/latest |
     grep -m1 '"tag_name":' | sed -E 's/.*"v?([^"]+)".*/\1/')"
   [ -n "$tag" ] || {
-    echo "Could not detect latest Neovim release"
+    err "Could not detect latest Neovim release"
     return 1
   }
 
-  url="https://github.com/neovim/neovim/releases/download/v${tag}/nvim-linux64.tar.gz"
-  tmpdir="$(mktemp -d)"
+  local url="https://github.com/neovim/neovim/releases/download/v${tag}/nvim-linux-x86_64.tar.gz"
+  local tmpdir
+  tmpdir="$(mktemp -d -p "${TMPDIR:-$HOME/.cache}")"
   trap 'rm -rf "$tmpdir"' EXIT
 
+  msg "Downloading $url"
   curl -fsSL "$url" -o "$tmpdir/nvim.tar.gz" || {
-    echo "Download failed"
+    err "Download failed"
     return 1
   }
   tar -xzf "$tmpdir/nvim.tar.gz" -C "$tmpdir" || {
-    echo "Extract failed"
+    err "Extract failed"
     return 1
   }
 
-  dest="$HOME/.local/opt/nvim-${tag}"
+  local dest="$HOME/.local/opt/nvim-${tag}"
   rm -rf "$dest"
-  mv "$tmpdir/nvim-linux64" "$dest"
+  mv "$tmpdir/nvim-linux-x86_64" "$dest"
 
   ln -sfn "$dest/bin/nvim" "$HOME/.local/bin/nvim"
-  echo "Neovim ${tag} installed to $dest; symlinked at ~/.local/bin/nvim"
+  msg "Neovim ${tag} installed to $dest; symlinked at ~/.local/bin/nvim"
 }
 
 main() {
