@@ -233,7 +233,7 @@ EOF
 arch_install_base() {
   local pm="pacman"
   have paru && pm="paru"
-  $pm -S --needed --noconfirm zsh zoxide git neovim ripgrep fzf curl lsd bat cmake nodejs || true
+  $pm -S --needed --noconfirm zsh zoxide git neovim ripgrep fzf curl lsd bat cmake nodejs npm || true
   $pm -S --needed --noconfirm ttf-meslo-nerd-font-powerlevel10k zsh-theme-powerlevel10k zsh-autosuggestions zsh-syntax-highlighting zsh-history-substring-search-git || true
   $pm -S --needed --noconfirm fzf-tab-git || true
 }
@@ -271,7 +271,7 @@ ensure_backports_enabled() {
 
 apt_install_from_backports() {
   local codename="$(deb_codename)" || return 1
-  sudo apt -t "${codename}-backports" install -y nodejs golang
+  sudo apt -t "${codename}-backports" install -y nodejs npm golang
 }
 
 ensure_p10k_fonts() {
