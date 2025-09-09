@@ -271,7 +271,7 @@ ensure_backports_enabled() {
 
 apt_install_from_backports() {
   local codename="$(deb_codename)" || return 1
-  sudo apt -t "${codename}-backports" install -y nodejs golang neovim
+  sudo apt -t "${codename}-backports" install -y nodejs golang
 }
 
 ensure_p10k_fonts() {
@@ -508,10 +508,59 @@ deploy_scripts() {
 }
 
 mirror_system_zsh_plugins() {
+  mkdir -p "$HOME/.local/share/zsh/plugins"
+
+  link_if_exists() {
+    local src="$1" dst="$2"
+    [ -e "$src" ] || return 0
+    sudo_do ln -sfn "$src" "$dst"
+  }
+
   link_if_exists /usr/share/zsh-autosuggestions \
     "$HOME/.local/share/zsh/plugins/zsh-autosuggestions"
   link_if_exists /usr/share/zsh-syntax-highlighting \
     "$HOME/.local/share/zsh/plugins/zsh-syntax-highlighting"
+}
+
+ensure_neovim_portable() {
+  # require >= 0.9
+  if command -v nvim >/dev/null 2>&1; then
+    set -- $(nvim --version | sed -n '1s/.* v\([0-9]\+\)\.\([0-9]\+\).*/\1 \2/p')
+    [ -n "$1" ] && { [ "$1" -gt 0 ] || { [ "$1" -eq 0 ] && [ "$2" -ge 9 ]; }; } && {
+      echo "Neovim OK: $(nvim --version | head -1)"
+      return
+    }
+  fi
+
+  echo "Installing portable Neovim…"
+  mkdir -p "$HOME/.local/opt" "$HOME/.local/bin"
+  # fetch latest tag
+  tag="$(curl -fsSL https://api.github.com/repos/neovim/neovim/releases/latest |
+    grep -m1 '"tag_name":' | sed -E 's/.*"v?([^"]+)".*/\1/')"
+  [ -n "$tag" ] || {
+    echo "Could not detect latest Neovim release"
+    return 1
+  }
+
+  url="https://github.com/neovim/neovim/releases/download/v${tag}/nvim-linux64.tar.gz"
+  tmpdir="$(mktemp -d)"
+  trap 'rm -rf "$tmpdir"' EXIT
+
+  curl -fsSL "$url" -o "$tmpdir/nvim.tar.gz" || {
+    echo "Download failed"
+    return 1
+  }
+  tar -xzf "$tmpdir/nvim.tar.gz" -C "$tmpdir" || {
+    echo "Extract failed"
+    return 1
+  }
+
+  dest="$HOME/.local/opt/nvim-${tag}"
+  rm -rf "$dest"
+  mv "$tmpdir/nvim-linux64" "$dest"
+
+  ln -sfn "$dest/bin/nvim" "$HOME/.local/bin/nvim"
+  echo "Neovim ${tag} installed to $dest; symlinked at ~/.local/bin/nvim"
 }
 
 main() {
@@ -535,6 +584,7 @@ main() {
     debian_install_base
     ensure_backports_enabled
     apt_install_from_backports
+    ensure_neovim_portable
     debian_install_or_clone_zsh_plugins
     debian_dev_tools_notify_and_yamlfmt
     mirror_system_zsh_plugins
