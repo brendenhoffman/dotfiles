@@ -234,7 +234,7 @@ arch_install_base() {
   local pm="pacman"
   have paru && pm="paru"
   $pm -S --needed --noconfirm zsh zoxide git neovim ripgrep fzf curl lsd bat cmake nodejs npm || true
-  $pm -S --needed --noconfirm ttf-meslo-nerd-font-powerlevel10k zsh-theme-powerlevel10k zsh-autosuggestions zsh-syntax-highlighting zsh-history-substring-search-git || true
+  $pm -S --needed --noconfirm ttf-meslo-nerd-font-powerlevel10k zsh-theme-powerlevel10k zsh-autosuggestions zsh-syntax-highlighting zsh-history-substring-search || true
   $pm -S --needed --noconfirm fzf-tab-git || true
 }
 
@@ -631,11 +631,23 @@ ensure_neovim_portable() {
 }
 
 write_paru_conf() {
-  local cfg="$HOME/.config/paru/paru.conf"
-  if ask "Write ~/.config/paru/paru.conf with your options?"; then
-    mkdir -p "$(dirname "$cfg")"
-    tee "$cfg" >/dev/null <<'EOF'
-[options]
+  # detect the real user/home even if running via sudo
+  local tgt_user tgt_home
+  if [ -n "${SUDO_USER-}" ] && [ "$SUDO_USER" != "root" ]; then
+    tgt_user="$SUDO_USER"
+    tgt_home="$(getent passwd "$SUDO_USER" | cut -d: -f6)"
+  else
+    tgt_user="$USER"
+    tgt_home="$HOME"
+  fi
+
+  # resolve XDG config dir for that user
+  local xdg_conf="${XDG_CONFIG_HOME:-$tgt_home/.config}"
+  local dir="$xdg_conf/paru"
+  local file="$dir/paru.conf"
+
+  # content you wanted
+  local content='[options]
 PgpFetch
 Devel
 Provides
@@ -645,11 +657,21 @@ RemoveMake = yes
 SkipReview
 BatchInstall
 NewsOnUpgrade
-EOF
-    msg "Wrote $cfg"
+'
+
+  # create dirs and write as the target user (not root)
+  if [ -n "${SUDO_USER-}" ] && [ "$SUDO_USER" != "root" ]; then
+    sudo -u "$tgt_user" mkdir -p "$dir"
+    printf "%s" "$content" | sudo -u "$tgt_user" tee "$file" >/dev/null
   else
-    warn "Skipping paru.conf"
+    mkdir -p "$dir"
+    printf "%s" "$content" >"$file"
   fi
+
+  # final sanity: ensure ownership (helpful if earlier steps used sudo)
+  chown "$tgt_user":"$tgt_user" "$file" "$dir" 2>/dev/null || true
+
+  echo "paru config written to $file (user: $tgt_user)"
 }
 
 ensure_npm_xdg() {
