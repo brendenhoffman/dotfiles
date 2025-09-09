@@ -233,13 +233,13 @@ EOF
 arch_install_base() {
   local pm="pacman"
   have paru && pm="paru"
-  $pm -S --needed --noconfirm zsh zoxide git neovim ripgrep fzf curl bat cmake nodejs || true
+  $pm -S --needed --noconfirm zsh zoxide git neovim ripgrep fzf curl lsd bat cmake nodejs || true
   $pm -S --needed --noconfirm ttf-meslo-nerd-font-powerlevel10k zsh-theme-powerlevel10k zsh-autosuggestions zsh-syntax-highlighting zsh-history-substring-search-git || true
   $pm -S --needed --noconfirm fzf-tab-git || true
 }
 
 debian_install_base() {
-  sudo_do apt install -y zsh git ripgrep fzf curl bat build-essential cmake || true
+  sudo_do apt install -y zsh git ripgrep fzf curl bat lsd build-essential cmake || true
 }
 
 deb_codename() {
