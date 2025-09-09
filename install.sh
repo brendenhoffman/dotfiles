@@ -488,7 +488,7 @@ deploy_scripts() {
 
     # backup any existing non-symlink
     if [ -f "$dest" ] && [ ! -L "$dest" ]; then
-      backup_if_needed_file "$dest"
+      backup_if_needed "$dest"
     fi
 
     ln -sfn "$src" "$dest"
