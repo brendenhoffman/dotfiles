@@ -523,47 +523,111 @@ mirror_system_zsh_plugins() {
 }
 
 ensure_neovim_portable() {
+  # need >= 0.9
   if command -v nvim >/dev/null 2>&1; then
     set -- $(nvim --version | sed -n '1s/.* v\([0-9]\+\)\.\([0-9]\+\).*/\1 \2/p')
-    [ -n "$1" ] && { [ "$1" -gt 0 ] || { [ "$1" -eq 0 ] && [ "$2" -ge 9 ]; }; } && {
+    if [ -n "$1" ] && { [ "$1" -gt 0 ] || { [ "$1" -eq 0 ] && [ "$2" -ge 9 ]; }; }; then
       msg "Neovim OK: $(nvim --version | head -1)"
-      return
+      return 0
+    fi
+  fi
+
+  # choose asset by arch
+  local asset
+  case "$(uname -m)" in
+  x86_64) asset="nvim-linux-x86_64.tar.gz" ;;
+  aarch64 | arm64) asset="nvim-linux-arm64.tar.gz" ;;
+  *)
+    err "Unsupported arch $(uname -m)"
+    return 1
+    ;;
+  esac
+
+  local opt="$HOME/.local/opt" bin="$HOME/.local/bin"
+  local cache="${TMPDIR:-$HOME/.cache}"
+  mkdir -p "$opt" "$bin" "$cache" || {
+    err "Cannot create $opt or $bin or $cache"
+    return 1
+  }
+
+  local tmpdir
+  tmpdir="$(mktemp -d -p "$cache")" || {
+    err "mktemp failed"
+    return 1
+  }
+  trap 'rm -rf "$tmpdir"' EXIT
+
+  : >"$tmpdir/.writetest" || {
+    err "Cannot write to $tmpdir"
+    return 1
+  }
+
+  # downloader that tries HTTP/2, then forces HTTP/1.1, then wget
+  _download() {
+    local url="$1" out="$2"
+    # try normal (HTTP/2)
+    curl -fL --retry 3 --retry-all-errors -C - -o "$out" "$url" && return 0
+    # try forcing HTTP/1.1 (fixes some 302/h2 issues)
+    curl --http1.1 -fL --retry 3 --retry-all-errors -C - -o "$out" "$url" && return 0
+    # try wget if available
+    command -v wget >/dev/null 2>&1 && wget -O "$out" "$url" && return 0
+    return 1
+  }
+
+  local tar="$tmpdir/nvim.tar.gz"
+  local url_latest="https://github.com/neovim/neovim/releases/latest/download/${asset}"
+
+  msg "Downloading Neovim (latest)…"
+  if ! _download "$url_latest" "$tar"; then
+    warn "latest/ download failed; trying tagged release"
+
+    # grab exact tag (we already saw you do this in your script)
+    local tag
+    tag="$(curl -fsSL https://api.github.com/repos/neovim/neovim/releases/latest |
+      grep -m1 '"tag_name":' | sed -E 's/.*"v?([^"]+)".*/\1/')"
+    [ -n "$tag" ] || {
+      err "Could not detect latest tag"
+      return 1
+    }
+
+    local url_tag="https://github.com/neovim/neovim/releases/download/v${tag}/${asset}"
+    msg "Downloading Neovim v${tag}…"
+    _download "$url_tag" "$tar" || {
+      err "Download failed (network/URL write error)"
+      return 1
     }
   fi
 
-  msg "Installing portable Neovim…"
-  mkdir -p "$HOME/.local/opt" "$HOME/.local/bin"
-
-  # detect latest release
-  local tag
-  tag="$(curl -fsSL https://api.github.com/repos/neovim/neovim/releases/latest |
-    grep -m1 '"tag_name":' | sed -E 's/.*"v?([^"]+)".*/\1/')"
-  [ -n "$tag" ] || {
-    err "Could not detect latest Neovim release"
+  # sanity: make sure we didn't get an HTML error page
+  if [ ! -s "$tar" ] || file "$tar" | grep -qi html; then
+    err "Downloaded file is not a tarball (did we hit a 404 or a proxy error?)"
     return 1
-  }
+  fi
 
-  local url="https://github.com/neovim/neovim/releases/download/v${tag}/nvim-linux-x86_64.tar.gz"
-  local tmpdir
-  tmpdir="$(mktemp -d -p "${TMPDIR:-$HOME/.cache}")"
-  trap 'rm -rf "$tmpdir"' EXIT
-
-  msg "Downloading $url"
-  curl -fsSL "$url" -o "$tmpdir/nvim.tar.gz" || {
-    err "Download failed"
-    return 1
-  }
-  tar -xzf "$tmpdir/nvim.tar.gz" -C "$tmpdir" || {
+  tar -xzf "$tar" -C "$tmpdir" || {
     err "Extract failed"
     return 1
   }
+  local extracted
+  extracted="$(echo "$tmpdir"/nvim-linux-*)"
+  [ -d "$extracted" ] || {
+    err "Unexpected archive layout"
+    return 1
+  }
 
-  local dest="$HOME/.local/opt/nvim-${tag}"
+  local ver
+  ver="$("$extracted/bin/nvim" --version 2>/dev/null | sed -n '1s/.* v\([0-9.]\+\).*/\1/p')"
+  local dest="$opt/nvim-${ver:-portable-$(date +%Y%m%d)}"
   rm -rf "$dest"
-  mv "$tmpdir/nvim-linux-x86_64" "$dest"
+  mv "$extracted" "$dest" || {
+    err "Move failed"
+    return 1
+  }
 
-  ln -sfn "$dest/bin/nvim" "$HOME/.local/bin/nvim"
-  msg "Neovim ${tag} installed to $dest; symlinked at ~/.local/bin/nvim"
+  ln -sfn "$dest/bin/nvim" "$bin/nvim"
+  case ":$PATH:" in *":$bin:"*) : ;; *) export PATH="$bin:$PATH" ;; esac
+
+  msg "Neovim installed at $dest; symlinked at $bin/nvim"
 }
 
 main() {
