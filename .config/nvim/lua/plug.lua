@@ -22,6 +22,7 @@ Plug("numToStr/Comment.nvim")
 Plug("nvim-treesitter/nvim-treesitter-context")
 Plug("kylechui/nvim-surround")
 Plug("stevearc/conform.nvim")
+Plug("saecki/crates.nvim", { ["tag"] = "stable" })
 
 -- Completion
 Plug("neoclide/coc.nvim", { ["branch"] = "release" })
