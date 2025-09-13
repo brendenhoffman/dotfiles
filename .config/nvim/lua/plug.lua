@@ -12,7 +12,7 @@ Plug("nvim-lualine/lualine.nvim")
 Plug("rcarriga/nvim-notify")
 
 -- Editing / analysis
-Plug("dense-analysis/ale")
+--Plug("dense-analysis/ale")
 Plug("nvim-treesitter/nvim-treesitter", { ["do"] = ":TSUpdate" })
 Plug("Vigemus/iron.nvim")
 Plug("lukas-reineke/indent-blankline.nvim")
