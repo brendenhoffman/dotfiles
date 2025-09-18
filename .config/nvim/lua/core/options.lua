@@ -15,6 +15,8 @@ vim.opt.signcolumn = "no"
 vim.cmd("set verbose=0")
 vim.opt.wildmode = { "longest", "list", "full" }
 vim.opt.termguicolors = true
+vim.opt.hidden = true
+vim.opt.confirm = true
 
 -- Indentation
 vim.opt.softtabstop = 2
