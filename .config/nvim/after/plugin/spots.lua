@@ -1,7 +1,7 @@
 -- after/plugin/spots.lua — persistent, fuzzy-searchable “spots”
 local ns = vim.api.nvim_create_namespace("spots")
 local ns_preview = vim.api.nvim_create_namespace("spots_preview")
-local spots = {} -- in-memory: { {buf, id, file, label} ... }
+local spots = {} -- { {buf, id, file, label} ... }
 
 -- ========= persistence =========
 local store_path = vim.fn.stdpath("data") .. "/spots.json"
@@ -30,23 +30,27 @@ local function save_store(tbl)
 	vim.fn.writefile(vim.split(raw, "\n"), store_path)
 end
 
--- snapshot current extmarks -> store; replace per-file arrays (no label merging)
+-- snapshot current extmarks -> store (replace per-file arrays)
 local function persist_now()
-	-- aggregate by file
-	local agg = {} -- { [file] = { {lnum=, label=} ... } }
+	local agg = {} -- { [file] = { { lnum=, label= }... } }
 	for i = #spots, 1, -1 do
 		local sp = spots[i]
-		local pos = vim.api.nvim_buf_get_extmark_by_id(sp.buf, ns, sp.id, {})
-		if pos and #pos == 2 then
-			local lnum = pos[1] + 1
-			agg[sp.file] = agg[sp.file] or {}
-			table.insert(agg[sp.file], { lnum = lnum, label = sp.label or "" })
+		if vim.api.nvim_buf_is_loaded(sp.buf) then
+			local pos = vim.api.nvim_buf_get_extmark_by_id(sp.buf, ns, sp.id, {})
+			if pos and #pos == 2 then
+				local lnum = pos[1] + 1
+				local file = sp.file
+				if not agg[file] then
+					agg[file] = {}
+				end -- << fixed init
+				table.insert(agg[file], { lnum = lnum, label = sp.label or "" })
+			else
+				table.remove(spots, i)
+			end
 		else
-			-- extmark is gone; drop from memory
 			table.remove(spots, i)
 		end
 	end
-	-- merge with existing store but replace files we have snapshots for
 	local base = load_store()
 	for file, arr in pairs(agg) do
 		table.sort(arr, function(a, b)
@@ -57,11 +61,29 @@ local function persist_now()
 	save_store(base)
 end
 
+-- remove all in-memory spots for a file
+local function drop_file_spots(file)
+	for i = #spots, 1, -1 do
+		if spots[i].file == file then
+			table.remove(spots, i)
+		end
+	end
+end
+
 local function restore_for_buffer(buf)
+	-- Skip non-file/preview/temp buffers
+	if vim.bo[buf].buftype ~= "" or not vim.bo[buf].buflisted then
+		return
+	end
 	local file = vim.api.nvim_buf_get_name(buf)
 	if file == "" then
 		return
 	end
+
+	-- Clear any marks we might already have in this buffer and forget old entries for this file
+	pcall(vim.api.nvim_buf_clear_namespace, buf, ns, 0, -1)
+	drop_file_spots(file)
+
 	local recs = load_store()[file]
 	if not recs then
 		return
@@ -111,6 +133,30 @@ local function spot_at_line(buf, row)
 	end
 end
 
+-- smart jump: reuse buffer if already loaded; otherwise open
+local function jump_to(file, lnum)
+	local curfile = vim.api.nvim_buf_get_name(0)
+	if curfile == file then
+		vim.api.nvim_win_set_cursor(0, { lnum, 0 })
+		vim.cmd("normal! zz")
+		return
+	end
+	local b = vim.fn.bufnr(file)
+	if b ~= -1 then
+		if not vim.o.hidden and vim.bo.modified then
+			vim.cmd("keepalt rightbelow vsplit")
+		end
+		vim.cmd("keepalt keepjumps buffer " .. b)
+	else
+		if not vim.o.hidden and vim.bo.modified then
+			vim.cmd("keepalt rightbelow vsplit")
+		end
+		vim.cmd("keepalt keepjumps edit " .. vim.fn.fnameescape(file))
+	end
+	vim.api.nvim_win_set_cursor(0, { lnum, 0 })
+	vim.cmd("normal! zz")
+end
+
 -- ========= API =========
 local function add_spot(label)
 	local buf, row, col = curpos()
@@ -152,19 +198,21 @@ end
 local function collect_entries()
 	local entries, keep = {}, {}
 	for _, sp in ipairs(spots) do
-		local pos = vim.api.nvim_buf_get_extmark_by_id(sp.buf, ns, sp.id, {})
-		if pos and #pos == 2 then
-			local row = pos[1]
-			table.insert(entries, {
-				file = sp.file,
-				bufnr = sp.buf,
-				lnum = row + 1,
-				col = 1,
-				label = sp.label or "",
-				preview = line_preview(sp.buf, row),
-				id = sp.id,
-			})
-			keep[sp.id] = true
+		if vim.api.nvim_buf_is_loaded(sp.buf) then
+			local pos = vim.api.nvim_buf_get_extmark_by_id(sp.buf, ns, sp.id, {})
+			if pos and #pos == 2 then
+				local row = pos[1]
+				table.insert(entries, {
+					file = sp.file,
+					bufnr = sp.buf,
+					lnum = row + 1,
+					col = 1,
+					label = sp.label or "",
+					preview = line_preview(sp.buf, row),
+					id = sp.id,
+				})
+				keep[sp.id] = true
+			end
 		end
 	end
 	if #keep ~= #spots then
@@ -186,25 +234,22 @@ local function pick_spot()
 		return
 	end
 
-	local ok, telescope = pcall(require, "telescope")
+	local ok = pcall(require, "telescope")
 	if not ok then
-		-- fallback simple list
 		local items = {}
 		for i, e in ipairs(entries) do
 			items[i] = string.format(
-				"%s:%d  %s  | %s",
+				"%s:%d  %s%s",
 				vim.fn.fnamemodify(e.file, ":t"),
 				e.lnum,
-				(e.label ~= "" and ("[" .. e.label .. "]") or ""),
+				(e.label ~= "" and ("[" .. e.label .. "] ") or ""),
 				e.preview
 			)
 		end
 		local sel = vim.fn.inputlist(vim.list_extend({ "Pick a spot:" }, items))
 		local e = entries[sel]
 		if e then
-			vim.cmd("edit " .. vim.fn.fnameescape(e.file))
-			vim.api.nvim_win_set_cursor(0, { e.lnum, 0 })
-			vim.cmd("normal! zz")
+			jump_to(e.file, e.lnum)
 		end
 		return
 	end
@@ -213,16 +258,6 @@ local function pick_spot()
 		require("telescope.pickers"), require("telescope.finders"), require("telescope.config").values
 	local actions, action_state = require("telescope.actions"), require("telescope.actions.state")
 	local previewers = require("telescope.previewers")
-	local entry_display = require("telescope.pickers.entry_display")
-	local displayer = entry_display.create({
-		separator = " │ ",
-		items = {
-			{ width = 28 }, -- filename
-			{ width = 5 }, -- line
-			{ width = 18 }, -- [label]
-			{ remaining = true }, -- snippet
-		},
-	})
 
 	local function delete_current(pb)
 		local e = action_state.get_selected_entry().value
@@ -234,7 +269,7 @@ local function pick_spot()
 		end
 		pcall(vim.api.nvim_buf_del_extmark, b, ns, e.id)
 		for i, sp in ipairs(spots) do
-			if sp.id == e.id and sp.buf == b then
+			if sp.id == e.id and sp.file == e.file then
 				table.remove(spots, i)
 				break
 			end
@@ -251,16 +286,12 @@ local function pick_spot()
 			finder = finders.new_table({
 				results = entries,
 				entry_maker = function(e)
-					-- pick one:
-					local name = vim.fn.fnamemodify(e.file, ":t") -- filename only
-					-- local name = vim.fn.fnamemodify(e.file, ":.") -- relative path
-
+					local name = vim.fn.fnamemodify(e.file, ":t") -- or ":." for relative path
 					local label = (e.label ~= "" and ("[" .. e.label .. "] ")) or ""
 					local disp = string.format("%s:%d %s%s", name, e.lnum, label, e.preview)
-
 					return {
 						value = e,
-						display = disp, -- <- plain string, no column padding
+						display = disp,
 						ordinal = table.concat({ e.label, name, tostring(e.lnum), e.preview }, " "),
 						filename = e.file,
 						lnum = e.lnum,
@@ -315,10 +346,9 @@ local function pick_spot()
 				map("i", "<CR>", function(pb)
 					local e = action_state.get_selected_entry().value
 					actions.close(pb)
-					vim.cmd("edit " .. vim.fn.fnameescape(e.file))
-					vim.api.nvim_win_set_cursor(0, { e.lnum, 0 })
-					vim.cmd("normal! zz")
+					jump_to(e.file, e.lnum)
 				end)
+				-- delete current spot (insert mode only, to avoid 'd' cmdline quirks)
 				map("i", "<C-d>", delete_current)
 				return true
 			end,
@@ -355,9 +385,7 @@ local function next_spot(dir)
 		end
 		best = best or list[#list]
 	end
-	vim.cmd("edit " .. vim.fn.fnameescape(best.file))
-	vim.api.nvim_win_set_cursor(0, { best.lnum, 0 })
-	vim.cmd("normal! zz")
+	jump_to(best.file, best.lnum)
 end
 
 -- Commands & keymaps
