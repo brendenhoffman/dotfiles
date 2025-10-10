@@ -68,4 +68,13 @@ alias more='${(z)PAGER}'
 alias find='fd -H'
 alias crewchief='protontricks-launch ~/.local/wine/crewchief/drive_c/Program\ Files\ \(x86\)/Britton\ IT\ Ltd/CrewChiefV4/CrewChiefV4.exe'
 alias gitdir='cl ~/.local/git'
-alias chatgpt='flatpak run io.github.ungoogled_software.ungoogled_chromium --app=https://chat.openai.com'
+alias chatgpt='flatpak run io.github.ungoogled_software.ungoogled_chromium \
+  --enable-features=VaapiVideoDecoder \
+  --process-per-site \
+  --enable-gpu-rasterization \
+  --enable-zero-copy \
+  --disable-smooth-scrolling \
+  --disable-background-timer-throttling \
+  --disable-renderer-backgrounding \
+  --disable-features=InfiniteSessionRestore \
+  --app=https://chat.openai.com'">/dev/null 2>&1 & disown"
