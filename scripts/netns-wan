@@ -1,0 +1,77 @@
+#!/bin/bash
+set -euo pipefail
+
+NS=wan
+
+# Interfaces/gateway (portable)
+WANDEV="$(ip -4 route show default | awk '{for (i=1;i<=NF;i++) if ($i=="dev") print $(i+1)}' | head -n1)"
+GW="$(ip -4 route show default | awk '{for (i=1;i<=NF;i++) if ($i=="via") print $(i+1)}' | head -n1)"
+
+HOST_VETH="veth-$NS"
+SUBNET="10.200.0.0/24"
+HOST_IP="10.200.0.1/24"
+NS_IP="10.200.0.2/24"
+
+# numeric tables: no need to edit /etc/iproute2/rt_tables
+TABLE_WAN=200
+TABLE_NETNS=201
+
+# DNS for this namespace
+NS_DNS="192.168.6.67"
+
+cleanup() {
+  set +e
+  sudo ip rule del priority 79 2>/dev/null
+  sudo ip rule del priority 91 2>/dev/null
+  sudo ip route flush table $TABLE_WAN 2>/dev/null
+  sudo ip route flush table $TABLE_NETNS 2>/dev/null
+  sudo iptables -t nat -D POSTROUTING -s "$SUBNET" -o "$WANDEV" -j MASQUERADE 2>/dev/null
+  sudo ip link del "$HOST_VETH" 2>/dev/null
+  sudo ip netns del "$NS" 2>/dev/null
+}
+trap cleanup EXIT
+
+# Rerun-safe pre-clean (handles "File exists")
+cleanup
+
+# Create per-netns resolv.conf (effective for ip netns exec)
+sudo mkdir -p "/etc/netns/$NS"
+printf "nameserver %s\n" "$NS_DNS" | sudo tee "/etc/netns/$NS/resolv.conf" >/dev/null
+
+# Create namespace + veth
+sudo ip netns add "$NS"
+sudo ip link add "$HOST_VETH" type veth peer name eth0 netns "$NS"
+
+# Host side
+sudo ip addr add "$HOST_IP" dev "$HOST_VETH"
+sudo ip link set "$HOST_VETH" up
+
+# Namespace side
+sudo ip netns exec "$NS" ip addr add "$NS_IP" dev eth0
+sudo ip netns exec "$NS" ip link set lo up
+sudo ip netns exec "$NS" ip link set eth0 up
+sudo ip netns exec "$NS" ip route replace default via 10.200.0.1
+
+# Enable forwarding (runtime; if you want persistent, use /etc/sysctl.d)
+sudo /usr/sbin/sysctl -w net.ipv4.ip_forward=1 >/dev/null
+
+# Policy routing:
+sudo ip route replace default via "$GW" dev "$WANDEV" table $TABLE_WAN
+sudo ip rule add priority 91 iif "$HOST_VETH" lookup $TABLE_WAN
+
+sudo ip route replace "$SUBNET" dev "$HOST_VETH" table $TABLE_NETNS
+sudo ip rule add priority 79 to "$SUBNET" lookup $TABLE_NETNS
+
+# NAT
+sudo iptables -t nat -C POSTROUTING -s "$SUBNET" -o "$WANDEV" -j MASQUERADE 2>/dev/null ||
+  sudo iptables -t nat -A POSTROUTING -s "$SUBNET" -o "$WANDEV" -j MASQUERADE
+
+# Run command in namespace as your user (preserves the netns resolv.conf behavior)
+sudo ip netns exec "$NS" runuser -u "$USER" -- env \
+  DISPLAY="$DISPLAY" \
+  XDG_RUNTIME_DIR="$XDG_RUNTIME_DIR" \
+  GDK_BACKEND=x11 \
+  QT_QPA_PLATFORM=xcb \
+  PULSE_LATENCY_MSEC=100 \
+  _JAVA_AWT_WM_NONREPARENTING=1 \
+  "$@"
