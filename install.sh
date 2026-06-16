@@ -208,7 +208,8 @@ write_paru_conf() {
     tgt_home="$HOME"
   fi
   local xdg_conf="${XDG_CONFIG_HOME:-$tgt_home/.config}"
-  local dir="$xdg_conf/paru" file="$dir/paru.conf"
+  local dir="$xdg_conf/paru"
+  local file="$dir/paru.conf"
   local content='[options]
 PgpFetch
 Devel
