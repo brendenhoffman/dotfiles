@@ -1,1 +1,1 @@
-`bash <(curl -fsSL https://raw.githubusercontent.com/brendenhoffman/dotfiles/main/install.sh)`
+`bash <(curl -fsSL https://raw.githubusercontent.com/brendenhoffman/dotfiles/fish-migration/install.sh)`
