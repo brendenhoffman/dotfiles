@@ -52,7 +52,7 @@ ensure_git_early() {
 # ── Repo ──────────────────────────────────────────────────────────────
 ensure_repo() {
   local remote="${DOTFILES_REMOTE:-https://github.com/brendenhoffman/dotfiles.git}"
-  local branch="${DOTFILES_BRANCH:-main}"
+  local branch="${DOTFILES_BRANCH:-fish-migration}"
 
   if [ ! -d "$REPO_DIR/.git" ]; then
     msg "Cloning dotfiles into $REPO_DIR"
