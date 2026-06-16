@@ -1,0 +1,4 @@
+#!/bin/sh
+# Used as MANPAGER. Strips man formatting codes, then pages through bat
+# with man syntax highlighting and no line numbers.
+col -bx | bat -l man -p
