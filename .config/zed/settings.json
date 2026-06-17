@@ -1,0 +1,143 @@
+{
+  "restore_on_startup": "launchpad",
+  "use_system_path_prompts": false,
+  "proxy": "",
+  "git": {
+    "git_gutter": "tracked_files"
+  },
+  "agent": {
+    "favorite_models": [],
+    "model_parameters": [],
+    "enable_feedback": false
+  },
+  "disable_ai": false,
+  "edit_predictions": {
+    "allow_data_collection": "no"
+  },
+  "show_edit_predictions": true,
+  "git_panel": {
+    "show_count_badge": true,
+    "file_icons": true,
+    "tree_view": true
+  },
+  "outline_panel": {
+    "git_status": true
+  },
+  "terminal": {
+    "toolbar": {
+      "breadcrumbs": false
+    },
+    "font_size": 14.0,
+    "show_count_badge": true
+  },
+  "project_panel": {
+    "git_status": true,
+    "dock": "left",
+    "git_status_indicator": true,
+    "diagnostic_badges": true,
+    "bold_folder_labels": true
+  },
+  "tabs": {
+    "file_icons": true,
+    "git_status": true
+  },
+  "title_bar": {
+    "show_menus": false,
+    "show_branch_status_icon": true
+  },
+  "status_bar": {
+    "show_active_file": false
+  },
+  "search": {
+    "regex": true
+  },
+  "use_smartcase_search": true,
+  "languages": {
+    "C++": {
+      "format_on_save": "on"
+    },
+    "C": {
+      "format_on_save": "on"
+    }
+  },
+  "diagnostics": {
+    "inline": {
+      "enabled": true
+    }
+  },
+  "prettier": {
+    "allowed": true
+  },
+  "icon_theme": "Catppuccin Mocha",
+  "cli_default_open_behavior": "new_window",
+  "colorize_brackets": true,
+  "inlay_hints": {
+    "show_background": false,
+    "enabled": true
+  },
+  "completion_menu_item_kind": "symbol",
+  "completion_menu_scrollbar": "auto",
+  "show_whitespaces": "trailing",
+  "indent_guides": {
+    "background_coloring": "disabled",
+    "coloring": "indent_aware",
+    "active_line_width": 3,
+    "line_width": 2
+  },
+  "scrollbar": {
+    "axes": {
+      "vertical": false
+    },
+    "cursors": true,
+    "show": "system"
+  },
+  "minimap": {
+    "thumb": "hover",
+    "show": "auto"
+  },
+  "which_key": {
+    "enabled": true
+  },
+  "soft_wrap": "editor_width",
+  "minimum_contrast_for_highlights": 60.0,
+  "rounded_selection": false,
+  "unnecessary_code_fade": 0.2,
+  "cursor_shape": "bar",
+  "agent_buffer_font_size": 12.0,
+  "agent_ui_font_size": 14.0,
+  "buffer_font_family": "Hack",
+  "on_last_window_closed": "quit_app",
+  "when_closing_with_no_tabs": "close_window",
+  "telemetry": {
+    "diagnostics": false,
+    "metrics": false,
+    "anthropic_retention": false,
+  },
+  "vim_mode": true,
+  "vim": {
+    "cursor_shape": {
+      "normal": "block"
+    },
+    "use_smartcase_find": true,
+    "toggle_relative_line_numbers": false,
+    "use_system_clipboard": "always",
+  },
+  "base_keymap": "VSCode",
+  "relative_line_numbers": "disabled",
+  "show_wrap_guides": true,
+  "wrap_guides": [80],
+  "remove_trailing_whitespace_on_save": true,
+  "ensure_final_newline_on_save": true,
+  "agent_servers": {
+    "claude-acp": {
+      "type": "registry",
+    },
+  },
+  "ui_font_size": 16,
+  "buffer_font_size": 15,
+  "theme": {
+    "mode": "system",
+    "light": "Ayu Light",
+    "dark": "Ayu Dark",
+  },
+}

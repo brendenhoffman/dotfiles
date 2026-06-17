@@ -1,0 +1,33 @@
+[
+  {
+    "context": "Editor && vim_mode == insert && !menu",
+    "bindings": {
+      "j j": "vim::NormalBefore",
+    },
+  },
+  {
+    "context": "Editor && vim_mode == normal && !menu",
+    "bindings": {
+      "w w": "workspace::Save",
+      "w q": ["action::Sequence", ["workspace::Save", "pane::CloseActiveItem"]],
+      "t t": "terminal_panel::ToggleFocus",
+      "/": "buffer_search::DeployReplace",
+    },
+  },
+  {
+    "context": "Editor && !menu",
+    "bindings": {
+      "ctrl-a": "editor::SelectAll",
+      "ctrl-c": "editor::Copy",
+      "ctrl-x": "editor::Cut",
+      "ctrl-v": "editor::Paste",
+      "ctrl-f": "buffer_search::DeployReplace",
+    },
+  },
+  {
+    "context": "Editor && vim_mode == visual && !VimWaiting && !menu",
+    "bindings": {
+      "backspace": "vim::VisualDelete",
+    },
+  },
+]
