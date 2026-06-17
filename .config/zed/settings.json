@@ -1,4 +1,7 @@
 {
+  "collaboration_panel": {
+    "button": false
+  },
   "restore_on_startup": "launchpad",
   "use_system_path_prompts": false,
   "proxy": "",
@@ -6,6 +9,9 @@
     "git_gutter": "tracked_files"
   },
   "agent": {
+    "default_width": 360.0,
+    "sidebar_side": "right",
+    "dock": "right",
     "favorite_models": [],
     "model_parameters": [],
     "enable_feedback": false
@@ -16,6 +22,7 @@
   },
   "show_edit_predictions": true,
   "git_panel": {
+    "default_width": 240.0,
     "show_count_badge": true,
     "file_icons": true,
     "tree_view": true
@@ -31,6 +38,8 @@
     "show_count_badge": true
   },
   "project_panel": {
+    "hide_root": true,
+    "indent_size": 12.0,
     "git_status": true,
     "dock": "left",
     "git_status_indicator": true,
