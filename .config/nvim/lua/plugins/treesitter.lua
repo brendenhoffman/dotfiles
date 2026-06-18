@@ -1,9 +1,14 @@
 local M = {}
 
--- Only bootstrap logic here (your runtime config stays in after/plugin/treesitter.lua)
 function M.bootstrap()
-	-- Ensure parsers are present/updated for the langs list
-	pcall(vim.cmd, "TSUpdate")
+	local ok, ts = pcall(require, "nvim-treesitter")
+	if not ok then
+		return
+	end
+	ts.install({
+		"bash", "c", "lua", "markdown", "markdown_inline",
+		"query", "vim", "vimdoc",
+	}):wait(120000)
 end
 
 return M

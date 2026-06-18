@@ -1,3 +1,5 @@
+if not pcall(require, "coc") then return end
+
 vim.keymap.set(
 	"i",
 	"<TAB>",
