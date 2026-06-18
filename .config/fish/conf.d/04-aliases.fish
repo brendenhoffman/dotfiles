@@ -1,21 +1,19 @@
 # ── editor / config ────────────────────────────────────────────────────
-alias v='$EDITOR'
-alias sev='sudo nvim'
-alias vv='sudo nvim'
-alias sudoedit='sudo nvim'
-alias vimrc='nvim $XDG_CONFIG_HOME/nvim/init.lua'
-alias vimrcd='cl $XDG_CONFIG_HOME/nvim'
-alias fishrc='nvim ~/.config/fish/config.fish'
-alias fishrcd='cl ~/.config/fish/conf.d'
+alias v='zed'
+alias vv='sudoedit'
+alias fishrc='zed $XDG_CONFIG_HOME/fish/config.fish'
+alias fishrcd='cl $XDG_CONFIG_HOME/fish/conf.d'
 alias reload='exec fish'
+alias aliases='zed $XDG_CONFIG_HOME/fish/conf.d/04-aliases.fish'
+alias dots='zed ~/local/git/dotfiles'
 
 # ── navigation ─────────────────────────────────────────────────────────
 alias cd='z'
 alias cd..='cd ..'
 alias cl..='cl ..'
-alias cdg='cd ~/.local/git'
+alias cdg='cl ~/.local/git'
 alias gitdir='cl ~/.local/git'
-alias codedir='cd $HOME/Documents/Code'
+alias codedir='cl $HOME/Documents/Code'
 
 # ── listing ────────────────────────────────────────────────────────────
 alias ls='lsd -ah --group-directories-first'
@@ -26,7 +24,7 @@ alias less='$PAGER'
 alias more='$PAGER'
 alias cat='bat -P'
 alias man='man-remote'
-alias diff='nvim -d'
+alias diff='zed -diff'
 
 # ── search / filter ────────────────────────────────────────────────────
 alias grep='rg'
@@ -61,18 +59,14 @@ alias logout='sudo pkill -u $USER'
 alias shutdown='shutdown now'
 alias suspend='sudo systemctl suspend'
 alias errlog='journalctl -p err -e'
-alias xx='xrdb ~/.Xresources'
 alias rmr='rm -r'
-
-# ── file manager ───────────────────────────────────────────────────────
-alias r='vifm'
-alias sr='sudo vifmrun .'
 
 # ── misc ───────────────────────────────────────────────────────────────
 alias neofetch='fastfetch'
 alias gpp='g++'
 alias trans='transmission-cli'
 alias mocp='mocp -M $XDG_CONFIG_HOME/moc/'
+alias updatedots='bash ~/local/git/dotfiles/install.sh'
 
 # ── Arch-specific ──────────────────────────────────────────────────────
 alias p='paru'

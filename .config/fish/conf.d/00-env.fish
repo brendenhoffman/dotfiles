@@ -31,3 +31,9 @@ set -gx GTK2_RC_FILES    $HOME/.config/gtk-2.0/gtkrc
 set -gx PULSE_COOKIE     $HOME/.config/pulse/cookie
 set -gx SSH_ASKPASS      /usr/bin/ksshaskpass
 set -gx READER           zathura
+set -gx EDITOR micro
+set -gx VISUAL micro
+set -gx SUDO_EDITOR micro
+set -gx PAGER 'bat -p'
+set -gx MANPAGER manpager
+set -gx MANROFFOPT '-c'

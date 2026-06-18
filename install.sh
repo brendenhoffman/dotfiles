@@ -6,6 +6,7 @@ REPO_DIR="${REPO_DIR:-$HOME/.local/git/dotfiles}"
 NEED_LINK_DIRS=(
   ".config/fish"
   ".config/environment.d"
+  ".config/starship.toml"
 )
 
 SCRIPTS_DIR="$REPO_DIR/scripts"
@@ -195,7 +196,7 @@ arch_install_packages() {
   have paru && pm=paru
   # base-devel provides gcc/make needed for rustup to link
   sudo_do pacman -S --needed --noconfirm base-devel curl || true
-  $pm -S --needed --noconfirm fish fzf zed || true
+  $pm -S --needed --noconfirm fish fzf zed micro || true
 }
 
 write_paru_conf() {
@@ -251,13 +252,12 @@ debian_offer_system_upgrade_nonfatal() {
 }
 
 debian_install_packages() {
-  # build-essential + curl so rustup can bootstrap and link
-  sudo_do apt-get install -y build-essential curl fish fzf
+  sudo_do apt-get install -y build-essential curl fish fzf micro
 }
 
 # ── Alpine ────────────────────────────────────────────────────────────
 alpine_install_packages() {
-  sudo_do apk add --no-cache build-base curl fish fzf
+  sudo_do apk add --no-cache build-base curl fish fzf micro
 }
 
 # ── RHEL family (Rocky / Alma / CentOS Stream) ────────────────────────
@@ -269,7 +269,7 @@ rhel_install_packages() {
       sudo_do dnf config-manager --enable crb 2>/dev/null || true
   fi
   sudo_do dnf groupinstall -y "Development Tools"
-  sudo_do dnf install -y curl fish fzf
+  sudo_do dnf install -y curl fish fzf micro
 }
 
 # ── Shared: rustup + cargo-binstall + tools ───────────────────────────
@@ -301,6 +301,34 @@ install_cargo_tools() {
   msg "Installing Rust tools via cargo-binstall"
   cargo binstall --no-confirm \
     bat fd-find ripgrep zoxide lsd zellij starship cargo-update
+}
+
+# ── SSH server (non-Arch) ─────────────────────────────────────────────
+ensure_sshd() {
+  ask "Set up SSH server (install, enable, allow root login)?" || return 0
+  local svc=sshd
+  if have apt-get; then
+    sudo_do apt-get install -y openssh-server
+    svc=ssh
+  elif have dnf; then
+    sudo_do dnf install -y openssh-server
+  elif have apk; then
+    sudo_do apk add --no-cache openssh
+  fi
+
+  local cfg=/etc/ssh/sshd_config
+  sudo_do sed -i 's/^#\?PermitRootLogin.*/PermitRootLogin yes/' "$cfg"
+  sudo_do grep -q 'PermitRootLogin' "$cfg" 2>/dev/null || \
+    printf 'PermitRootLogin yes\n' | sudo_do tee -a "$cfg" >/dev/null
+
+  if have rc-service; then
+    sudo_do rc-update add sshd default
+    sudo_do rc-service sshd restart
+  else
+    sudo_do systemctl enable "$svc"
+    sudo_do systemctl restart "$svc"
+  fi
+  msg "sshd: enabled, started, root login permitted"
 }
 
 # ── npm XDG ───────────────────────────────────────────────────────────
@@ -386,10 +414,13 @@ main() {
   elif have apt-get; then
     debian_offer_system_upgrade_nonfatal
     debian_install_packages
+    ensure_sshd
   elif have dnf; then
     rhel_install_packages
+    ensure_sshd
   elif have apk; then
     alpine_install_packages
+    ensure_sshd
   else
     warn "Unsupported distro: native package steps skipped."
   fi

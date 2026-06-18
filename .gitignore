@@ -1,2 +1,3 @@
 /.backup-*
 .claude
+.config/fish/fish_variables
