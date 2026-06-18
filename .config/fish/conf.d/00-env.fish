@@ -3,8 +3,8 @@ set -gx GPG_TTY (tty)
 
 # Toolchain homes — mirror what .zprofile exports for zsh sessions.
 # (XDG base dirs themselves come from environment.d/10-xdg.conf via PAM.)
-set -q CARGO_HOME;  or set -gx CARGO_HOME  $XDG_DATA_HOME/cargo
-set -q RUSTUP_HOME; or set -gx RUSTUP_HOME $XDG_DATA_HOME/rustup
+set -gx CARGO_HOME  $XDG_DATA_HOME/cargo
+set -gx RUSTUP_HOME $XDG_DATA_HOME/rustup
 set -gx GOPATH $XDG_DATA_HOME/go
 set -gx GOBIN  $HOME/.local/bin
 
