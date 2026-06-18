@@ -5,17 +5,12 @@ add_newline = true
 continuation_prompt = "[▸▹ ](dimmed white)"
 
 format = """($nix_shell$container$fill$git_metrics\n)$cmd_duration\
-$hostname\
-$localip\
-$shlvl\
-$shell\
-$env_var\
-$jobs\
-$sudo\
 $username\
+$hostname\
 $character"""
 
 right_format = """
+$localip\
 $singularity\
 $kubernetes\
 $directory\
@@ -108,9 +103,12 @@ style = 'green italic'
 [username]
 style_user = "bright-yellow bold italic"
 style_root = "purple bold italic"
-format = "[⭘ $user]($style) "
+format = "[$user ]($style)"
 disabled = false
 show_always = false
+
+[hostname]
+format = "[$ssh_symbol$hostname]($style)"
 
 [directory]
 home_symbol = "~"
@@ -133,7 +131,7 @@ symbol = "[▶](blue italic)"
 
 [localip]
 ssh_only = true
-format = " ◯[$localipv4](bold magenta)"
+format = " [$localipv4 ](bold magenta)"
 disabled = false
 
 [time]

@@ -271,18 +271,32 @@ rhel_install_packages() {
 
 # ── Shared: rustup + cargo-binstall + tools ───────────────────────────
 bootstrap_rust() {
-  if ! have rustup; then
+  if have rustup; then
+    msg "Updating rustup toolchain"
+    rustup update
+  elif have pacman; then
+    msg "Bootstrapping rustup via pacman"
+    sudo_do pacman -S --needed --noconfirm rustup
+    rustup toolchain install stable --no-self-update 2>/dev/null || true
+  else
     msg "Bootstrapping rustup (stable)"
     curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs |
       sh -s -- -y --no-modify-path --default-toolchain stable
-  else
-    msg "rustup already present"
   fi
-  # Make cargo available in this session
   # shellcheck disable=SC1091
   [ -f "$CARGO_HOME/env" ] && . "$CARGO_HOME/env"
   export PATH="$CARGO_HOME/bin:$PATH"
   rustup component add rustfmt 2>/dev/null || true
+}
+
+# ── Neovim (Arch only — other distros ship versions too old for nvim 12) ──
+maybe_install_neovim() {
+  have pacman || return 0
+  ask "Install Neovim and tree-sitter-cli?" || return 0
+  local pm=pacman
+  have paru && pm=paru
+  $pm -S --needed --noconfirm neovim || true
+  have cargo && cargo binstall --no-confirm tree-sitter-cli || true
 }
 
 install_cargo_tools() {
@@ -426,6 +440,7 @@ main() {
   ensure_npm_xdg
   bootstrap_rust
   install_cargo_tools
+  maybe_install_neovim
 
   maybe_chsh_to_fish
   deploy_scripts

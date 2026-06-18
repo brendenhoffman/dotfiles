@@ -22,6 +22,7 @@
       "ctrl-x": "editor::Cut",
       "ctrl-v": "editor::Paste",
       "ctrl-f": "buffer_search::DeployReplace",
+      "f5": "editor::ReloadFile",
     },
   },
   {
