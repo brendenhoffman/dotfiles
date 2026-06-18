@@ -193,7 +193,7 @@ arch_install_packages() {
   have paru && pm=paru
   # base-devel provides gcc/make needed for rustup to link
   sudo_do pacman -S --needed --noconfirm base-devel curl || true
-  $pm -S --needed --noconfirm fish fzf zed micro || true
+  $pm -S --needed --noconfirm fish fzf zed micro ttf-jetbrains-mono-nerd || true
 }
 
 write_paru_conf() {
