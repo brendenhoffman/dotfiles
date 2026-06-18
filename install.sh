@@ -107,14 +107,11 @@ link_into_home() {
 # ── Arch ──────────────────────────────────────────────────────────────
 # Returns: 0=no updates, 1=updates exist, 2=unknown (no checkupdates)
 arch_check_updates() {
-  if have checkupdates; then
-    if updates="$(checkupdates 2>/dev/null)"; then
-      [ -z "$updates" ] && return 0
-      echo "$updates" | sed 's/^/  /'
-      return 1
-    fi
-  fi
-  return 2
+  have checkupdates || return 2
+  updates=$(checkupdates 2>/dev/null || true)
+  [ -z "$updates" ] && return 0
+  echo "$updates" | sed 's/^/  /'
+  return 1
 }
 
 arch_offer_system_upgrade_or_abort() {
