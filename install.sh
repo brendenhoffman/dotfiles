@@ -295,8 +295,7 @@ maybe_install_neovim() {
   ask "Install Neovim and tree-sitter-cli?" || return 0
   local pm=pacman
   have paru && pm=paru
-  $pm -S --needed --noconfirm neovim || true
-  have cargo && cargo binstall --no-confirm tree-sitter-cli || true
+  $pm -S --needed --noconfirm neovim tree-sitter-cli || true
 }
 
 install_cargo_tools() {
