@@ -8,6 +8,7 @@ NEED_LINK_DIRS=(
   ".config/environment.d"
   ".config/starship.toml"
   ".config/yay"
+  ".config/nvim"
 )
 
 SCRIPTS_DIR="$REPO_DIR/scripts"
