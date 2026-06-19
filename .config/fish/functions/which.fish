@@ -3,7 +3,8 @@ function which --wraps which --description 'show alias/function definition and b
         if functions -q -- $cmd
             set -l fn_def (functions -- $cmd)
             # alias-created functions have description "alias name cmd..." — use that, not body parsing
-            set -l alias_target (string match -rg -- "--description 'alias $cmd ([^']+)'" $fn_def)
+            set -l pattern (string join '' -- "--description 'alias " $cmd "[ =]([^']+)'")
+            set -l alias_target (string match -rg -- $pattern $fn_def)
             if test -n "$alias_target"
                 echo "$cmd: aliased to $alias_target"
             else
@@ -13,7 +14,13 @@ function which --wraps which --description 'show alias/function definition and b
         end
 
         set -l bin (command --search -- $cmd 2>/dev/null)
-        test -n "$bin"; and echo "$cmd is $bin"
+        if test -n "$bin"
+            if test -L "$bin"
+                echo "$cmd is $bin symlinked to "(readlink -f -- $bin)
+            else
+                echo "$cmd is $bin"
+            end
+        end
 
         contains -- $cmd (builtin --names); and echo "$cmd is a fish builtin"
 

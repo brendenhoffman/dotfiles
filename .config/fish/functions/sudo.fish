@@ -1,7 +1,8 @@
 function sudo --wraps sudo
     if test (count $argv) -gt 0; and functions -q -- $argv[1]; and not set -q _SUDO_FISH_EXPAND
         set -l fn_def (functions -- $argv[1])
-        set -l alias_target (string match -rg -- "--description 'alias $argv[1] ([^']+)'" $fn_def)
+        set -l pattern (string join '' -- "--description 'alias " $argv[1] "[ =]([^']+)'")
+        set -l alias_target (string match -rg -- $pattern $fn_def)
         if test -n "$alias_target"
             # Simple alias: run the underlying binary directly — no fish subprocess needed
             command sudo -E (string split ' ' $alias_target) $argv[2..-1]
