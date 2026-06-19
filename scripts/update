@@ -8,3 +8,9 @@ elif command -v dnf     >/dev/null 2>&1; then sudo dnf upgrade -y
 elif command -v apk     >/dev/null 2>&1; then sudo apk upgrade; fi
 rustup update
 cargo install-update -a
+
+cargo_bin="${CARGO_HOME:-$HOME/.local/share/cargo}/bin"
+for bin in bat fd rg zoxide lsd zellij starship delta; do
+  [ -x "$cargo_bin/$bin" ] || continue
+  sudo install -o root -g root -m 0755 "$cargo_bin/$bin" /usr/local/bin/
+done

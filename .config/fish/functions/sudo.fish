@@ -5,32 +5,23 @@ function sudo --wraps sudo
         set -l alias_target (string match -rg -- $pattern $fn_def)
         if test -n "$alias_target"
             # Simple alias: run the underlying binary directly — no fish subprocess needed.
-            # Resolve to an absolute path: secure_path (if set) overrides -E for PATH lookups,
-            # but a path containing a slash skips lookup entirely and always works.
-            set -l target (string split ' ' $alias_target)
-            set -l resolved (command -v -- $target[1])
-            test -n "$resolved"; and set target[1] $resolved
-            command sudo -E $target $argv[2..-1]
+            # Bare name, no absolute-path override: secure_path (if set) is the authority
+            # on what root can run, same as any other sudo'd command.
+            command sudo -E (string split ' ' $alias_target) $argv[2..-1]
         else
             # Complex function: write to temp file — (string join \n) splits back into a list
             # when captured with (), so fish -c $script only ever sees the first line.
-            # Inject our own PATH explicitly so the function body has the same tools
-            # available as your interactive shell, consistent with how the alias and
-            # bare-command branches resolve commands below.
+            # No explicit PATH injection: let the spawned root fish process inherit
+            # whatever sudo's real policy gives it (see 01-path.fish for why that's not
+            # automatically undone by fish's own startup).
             set -l tmp (mktemp /tmp/sudo_fish.XXXXXX)
-            printf '%s\n' 'set -gx _SUDO_FISH_EXPAND 1' "set -gx PATH "(string join ' ' $PATH) $fn_def (string join ' ' -- (string escape -- $argv)) > $tmp
+            printf '%s\n' 'set -gx _SUDO_FISH_EXPAND 1' $fn_def (string join ' ' -- (string escape -- $argv)) > $tmp
             command sudo -E fish $tmp
             set -l ret $status
             command rm -f $tmp
             return $ret
         end
     else
-        # Bare command: resolve to an absolute path too, for the same reason as the
-        # alias branch — secure_path (if set) would otherwise hide $CARGO_HOME/bin etc.
-        if test (count $argv) -gt 0
-            set -l resolved (command -v -- $argv[1])
-            test -n "$resolved"; and set argv[1] $resolved
-        end
         command sudo $argv
     end
 end
