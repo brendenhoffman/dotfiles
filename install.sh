@@ -420,6 +420,33 @@ ensure_wget_xdg() {
   msg "wget HSTS database relocated to $cache/wget-hsts"
 }
 
+# ── visudo editor ───────────────────────────────────────────────────────
+# visudo only honors $EDITOR/$VISUAL if sudoers has env_editor enabled,
+# which would let any user run an arbitrary "editor" as root via visudo.
+# Defaults editor=... is the safe equivalent: a root-owned path list,
+# tried in order, with no influence from the invoking user's environment.
+configure_visudo_editor() {
+  have visudo || return 0
+  local micro_bin nvim_bin list tmp
+  micro_bin="$(command -v micro || true)"
+  [ -z "$micro_bin" ] && return 0
+  nvim_bin="$(command -v nvim || true)"
+  if [ -n "$nvim_bin" ]; then
+    list="$nvim_bin:$micro_bin"
+  else
+    list="$micro_bin"
+  fi
+  tmp="$(mktemp)"
+  printf 'Defaults editor="%s"\n' "$list" >"$tmp"
+  if sudo_do visudo -cf "$tmp" >/dev/null 2>&1; then
+    sudo_do install -o root -g root -m 0440 "$tmp" /etc/sudoers.d/dotfiles-editor
+    msg "visudo editor set to: $list"
+  else
+    warn "Generated sudoers editor snippet failed validation; skipping"
+  fi
+  rm -f "$tmp"
+}
+
 # ── Fish ──────────────────────────────────────────────────────────────
 maybe_chsh_to_fish() {
   local f
@@ -496,6 +523,7 @@ main() {
   bootstrap_rust
   install_cargo_tools
   maybe_install_neovim
+  configure_visudo_editor
 
   maybe_chsh_to_fish
   deploy_scripts

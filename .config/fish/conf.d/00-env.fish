@@ -35,13 +35,14 @@ set -gx GTK2_RC_FILES    $HOME/.config/gtk-2.0/gtkrc
 set -gx PULSE_COOKIE     $HOME/.config/pulse/cookie
 set -gx SSH_ASKPASS      /usr/bin/ksshaskpass
 set -gx READER           zathura
-set -gx EDITOR micro
+set -l editor_bin micro
 if command -q nvim
     set -l mm (nvim --version | string match -rg 'NVIM v(\d+)\.(\d+)')
-    test -n "$mm[1]"; and test (math "$mm[1] * 100 + $mm[2]") -ge 12; and set -gx EDITOR nvim
+    test -n "$mm[1]"; and test (math "$mm[1] * 100 + $mm[2]") -ge 12; and set editor_bin nvim
 end
-set -gx VISUAL micro
-set -gx SUDO_EDITOR micro
+set -gx EDITOR $editor_bin
+set -gx VISUAL $editor_bin
+set -gx SUDO_EDITOR $editor_bin
 set -gx PAGER 'bat --paging=always'
 set -gx BAT_PAGER 'less -R --search-options=W'
 set -gx MANPAGER manpager
