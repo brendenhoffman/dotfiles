@@ -20,8 +20,16 @@ alias ls='lsd -ah --group-directories-first'
 alias ll='lsd -alF --group-directories-first'
 
 # ── pager / viewer ─────────────────────────────────────────────────────
-alias less='$PAGER'
-alias more='$PAGER'
+function less
+    set -l cmd (string split ' ' -- $PAGER)
+    $cmd $argv
+end
+
+function more
+    set -l cmd (string split ' ' -- $PAGER)
+    $cmd $argv
+end
+
 alias cat='bat -P'
 alias man='man-remote'
 alias diff='zed -diff'
@@ -69,9 +77,9 @@ alias mocp='mocp -M $XDG_CONFIG_HOME/moc/'
 alias updatedots='bash ~/local/git/dotfiles/install.sh'
 
 # ── Arch-specific ──────────────────────────────────────────────────────
-alias p='paru'
-alias pp='paru -S'
-alias pr='paru -Rns'
+alias p='yay'
+alias pp='yay -S'
+alias pr='yay -Rns'
 alias pu='update'
 alias paclck='sudo rm /var/lib/pacman/db.lck'
 alias update-grub='sudo grub-mkconfig -o /boot/grub/grub.cfg'
@@ -87,5 +95,6 @@ end
 
 # command prefix avoids recursive call into this wrapper
 function printenv
-    command printenv $argv | $PAGER
+    set -l cmd (string split ' ' -- $PAGER)
+    command printenv $argv | $cmd
 end

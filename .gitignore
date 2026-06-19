@@ -1,3 +1,4 @@
 /.backup-*
 .claude
 .config/fish/fish_variables
+.config/yay/config.json

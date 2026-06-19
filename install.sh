@@ -7,6 +7,7 @@ NEED_LINK_DIRS=(
   ".config/fish"
   ".config/environment.d"
   ".config/starship.toml"
+  ".config/yay"
 )
 
 SCRIPTS_DIR="$REPO_DIR/scripts"
@@ -186,19 +187,6 @@ EOF
       fi
     fi
   fi
-
-  setup_informant
-}
-
-setup_informant() {
-  have yay || return
-  if ! have informant; then
-    yay -S --needed --noconfirm informant || { warn "informant install failed"; return; }
-  fi
-  local target_user="${USER:-$(id -un)}"
-  sudo_do usermod -aG informant "$target_user"
-  sudo_do informant read --all
-  msg "informant installed; user added to informant group; news marked read"
 }
 
 arch_install_packages() {
@@ -362,6 +350,69 @@ ensure_npm_xdg() {
   msg "npm configured for XDG (prefix=$HOME/.local)"
 }
 
+# ── Legacy dotdir migration ────────────────────────────────────────────
+# Mirrors every directory/file relocation declared in conf.d/00-env.fish
+migrate_legacy_dotdirs() {
+  local data="${XDG_DATA_HOME:-$HOME/.local/share}"
+  local cache="${XDG_CACHE_HOME:-$HOME/.cache}"
+  local cfg="${XDG_CONFIG_HOME:-$HOME/.config}"
+  local old new
+  for pair in \
+    "$HOME/.cargo:$data/cargo" \
+    "$HOME/.rustup:$data/rustup" \
+    "$HOME/go:$data/go" \
+    "$HOME/.android:$data/android" \
+    "$HOME/.gnupg:$data/gnupg" \
+    "$HOME/.gradle:$data/gradle" \
+    "$HOME/.wine:$data/wine" \
+    "$HOME/.fgfs:$data/flightgear" \
+    "$HOME/.net:$cache/dotnet-bundle-extract" \
+    "$HOME/texmf:$data/texmf" \
+    "$HOME/.java/.userPrefs:$cfg/java/.userPrefs" \
+    "$HOME/.lesshst:$cache/.lesshst" \
+    "$HOME/.Xauthority:$cache/.Xauthority" \
+    "$HOME/.gtkrc-2.0:$cfg/gtk-2.0/gtkrc" \
+    "$HOME/.pulse-cookie:$cfg/pulse/cookie"
+  do
+    old="${pair%%:*}"; new="${pair#*:}"
+    if [ -e "$old" ] && [ ! -e "$new" ]; then
+      mkdir -p "$(dirname "$new")"
+      mv "$old" "$new"
+      msg "Migrated $old -> $new"
+    fi
+  done
+
+  # TeX Live's pre-XDG cache/config dirs are year-versioned (~/.texlive2023/...)
+  for d in "$HOME"/.texlive*/texmf-var; do
+    [ -d "$d" ] || continue
+    [ -e "$cache/texlive/texmf-var" ] && continue
+    mkdir -p "$cache/texlive"
+    mv "$d" "$cache/texlive/texmf-var"
+    msg "Migrated $d -> $cache/texlive/texmf-var"
+  done
+  for d in "$HOME"/.texlive*/texmf-config; do
+    [ -d "$d" ] || continue
+    [ -e "$cfg/texlive/texmf-config" ] && continue
+    mkdir -p "$cfg/texlive"
+    mv "$d" "$cfg/texlive/texmf-config"
+    msg "Migrated $d -> $cfg/texlive/texmf-config"
+  done
+}
+
+# ── wget XDG ──────────────────────────────────────────────────────────
+ensure_wget_xdg() {
+  have wget || return 0
+  local cfg="${XDG_CONFIG_HOME:-$HOME/.config}/wget"
+  local cache="${XDG_CACHE_HOME:-$HOME/.cache}"
+  mkdir -p "$cfg"
+  if [ -f "$HOME/.wget-hsts" ] && [ ! -e "$cache/wget-hsts" ]; then
+    mv "$HOME/.wget-hsts" "$cache/wget-hsts"
+    msg "Migrated ~/.wget-hsts -> $cache/wget-hsts"
+  fi
+  printf 'hsts_file = %s/wget-hsts\n' "$cache" >"$cfg/wgetrc"
+  msg "wget HSTS database relocated to $cache/wget-hsts"
+}
+
 # ── Fish ──────────────────────────────────────────────────────────────
 maybe_chsh_to_fish() {
   local f
@@ -433,6 +484,8 @@ main() {
 
   # Shared across all distros
   ensure_npm_xdg
+  ensure_wget_xdg
+  migrate_legacy_dotdirs
   bootstrap_rust
   install_cargo_tools
   maybe_install_neovim
