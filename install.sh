@@ -31,6 +31,45 @@ ask() {
   case "${a,,}" in y|yes|"") return 0 ;; *) return 1 ;; esac
 }
 
+# ── sudo access ──────────────────────────────────────────────────────
+# Debian (and others) don't always add the first user to sudo by default,
+# unlike Arch/RHEL images. Fail fast with a fix instead of dying confusingly
+# partway through the first sudo_do call.
+ensure_sudo_access() {
+  [ "$(id -u)" -eq 0 ] && return 0
+
+  local user fix
+  user="$(id -un)"
+
+  if ! have sudo; then
+    err "sudo is not installed, and you are not root."
+    if have apt-get; then fix="apt-get install -y sudo && usermod -aG sudo $user"
+    elif have dnf; then fix="dnf install -y sudo && usermod -aG wheel $user"
+    elif have pacman; then fix="pacman -S --noconfirm sudo && usermod -aG wheel $user"
+    elif have apk; then fix="apk add sudo && usermod -aG wheel $user"
+    else fix="install your distro's sudo package, then usermod -aG <sudo-group> $user"
+    fi
+    echo "  As root (su -), run:" >&2
+    echo "    $fix" >&2
+    echo "  Then log out and back in, and re-run this script." >&2
+    exit 1
+  fi
+
+  if ! sudo -v 2>/dev/null; then
+    err "sudo is installed, but $user is not authorized to use it."
+    if have apt-get; then fix="usermod -aG sudo $user"
+    elif have dnf; then fix="usermod -aG wheel $user"
+    elif have pacman; then fix="usermod -aG wheel $user  # then uncomment %wheel in /etc/sudoers via visudo"
+    elif have apk; then fix="usermod -aG wheel $user  # then add '%wheel ALL=(ALL) ALL' via visudo if missing"
+    else fix="add $user to whatever group your /etc/sudoers grants, or add a direct sudoers entry via visudo"
+    fi
+    echo "  As root (su -), run:" >&2
+    echo "    $fix" >&2
+    echo "  Then log out and back in, and re-run this script." >&2
+    exit 1
+  fi
+}
+
 # ── Git ───────────────────────────────────────────────────────────────
 ensure_git_early() {
   have git && return
@@ -528,6 +567,7 @@ main() {
   fi
 
   # Shared across all distros
+  ensure_sudo_access
   ensure_npm_xdg
   ensure_wget_xdg
   migrate_legacy_dotdirs
