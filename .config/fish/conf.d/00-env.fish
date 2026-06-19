@@ -42,3 +42,4 @@ set -gx PAGER 'bat --paging=always'
 set -gx BAT_PAGER 'less -R --search-options=W'
 set -gx MANPAGER manpager
 set -gx MANROFFOPT '-c'
+set -gx DIFFPROG 'delta'
