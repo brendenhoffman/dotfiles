@@ -194,7 +194,11 @@ arch_install_packages() {
   have yay && pm=yay
   # base-devel provides gcc/make needed for rustup to link
   sudo_do pacman -S --needed --noconfirm base-devel curl || true
-  $pm -S --needed --noconfirm fish fzf zed micro ttf-jetbrains-mono-nerd || true
+  $pm -S --needed --noconfirm fish fzf zed micro ttf-jetbrains-mono-nerd \
+    less unzip xz zstd pigz pbzip2 || true
+  # Desktop-only extras (Arch is the desktop box; other distros are headless)
+  $pm -S --needed --noconfirm zathura ksshaskpass gparted fastfetch \
+    transmission-cli moc 7zip unrar cabextract ncompress || true
 }
 
 configure_yay() {
@@ -233,12 +237,14 @@ debian_offer_system_upgrade_nonfatal() {
 }
 
 debian_install_packages() {
-  sudo_do apt-get install -y build-essential curl fish fzf micro
+  sudo_do apt-get install -y build-essential curl fish fzf micro \
+    less unzip xz-utils zstd pigz pbzip2
 }
 
 # ── Alpine ────────────────────────────────────────────────────────────
 alpine_install_packages() {
-  sudo_do apk add --no-cache build-base curl fish fzf micro
+  sudo_do apk add --no-cache build-base curl fish fzf micro \
+    less unzip xz zstd pigz pbzip2
 }
 
 # ── RHEL family (Rocky / Alma / CentOS Stream) ────────────────────────
@@ -250,7 +256,8 @@ rhel_install_packages() {
       sudo_do dnf config-manager --enable crb 2>/dev/null || true
   fi
   sudo_do dnf groupinstall -y "Development Tools"
-  sudo_do dnf install -y curl fish fzf micro
+  sudo_do dnf install -y curl fish fzf micro \
+    less unzip xz zstd pigz pbzip2
 }
 
 # ── Shared: rustup + cargo-binstall + tools ───────────────────────────
@@ -294,7 +301,7 @@ install_cargo_tools() {
 
   msg "Installing Rust tools via cargo-binstall"
   cargo binstall --no-confirm \
-    bat fd-find ripgrep zoxide lsd zellij starship cargo-update
+    bat fd-find ripgrep zoxide lsd zellij starship cargo-update git-delta
 }
 
 # ── SSH server (non-Arch) ─────────────────────────────────────────────

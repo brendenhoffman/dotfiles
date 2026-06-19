@@ -36,6 +36,10 @@ set -gx PULSE_COOKIE     $HOME/.config/pulse/cookie
 set -gx SSH_ASKPASS      /usr/bin/ksshaskpass
 set -gx READER           zathura
 set -gx EDITOR micro
+if command -q nvim
+    set -l mm (nvim --version | string match -rg 'NVIM v(\d+)\.(\d+)')
+    test -n "$mm[1]"; and test (math "$mm[1] * 100 + $mm[2]") -ge 12; and set -gx EDITOR nvim
+end
 set -gx VISUAL micro
 set -gx SUDO_EDITOR micro
 set -gx PAGER 'bat --paging=always'

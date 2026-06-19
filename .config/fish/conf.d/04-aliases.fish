@@ -32,7 +32,14 @@ end
 
 alias cat='bat -P'
 alias man='man-remote'
-alias diff='zed -diff'
+
+function diff --wraps diff
+    if command -q zeditor; or command -q zed-editor; or command -q zed; or command -q zedit
+        zed -diff $argv
+    else
+        delta $argv
+    end
+end
 
 # ── search / filter ────────────────────────────────────────────────────
 alias grep='rg'
