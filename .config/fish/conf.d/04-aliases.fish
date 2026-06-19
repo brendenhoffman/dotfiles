@@ -81,7 +81,7 @@ alias neofetch='fastfetch'
 alias gpp='g++'
 alias trans='transmission-cli'
 alias mocp='mocp -M $XDG_CONFIG_HOME/moc/'
-alias updatedots='bash ~/local/git/dotfiles/install.sh'
+alias updatedots='bash ~/.local/git/dotfiles/install.sh'
 
 # ── Arch-specific ──────────────────────────────────────────────────────
 alias p='yay'
