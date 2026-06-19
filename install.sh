@@ -303,6 +303,15 @@ install_cargo_tools() {
   msg "Installing Rust tools via cargo-binstall"
   cargo binstall --no-confirm \
     bat fd-find ripgrep zoxide lsd zellij starship cargo-update git-delta
+
+  # Root-owned copies in /usr/local/bin so these resolve under sudo on any
+  # machine's default secure_path (which virtually always includes it),
+  # without ever trusting the user-writable $CARGO_HOME/bin for root's PATH.
+  local bin
+  for bin in bat fd rg zoxide lsd zellij starship delta; do
+    [ -x "$CARGO_HOME/bin/$bin" ] || continue
+    sudo_do install -o root -g root -m 0755 "$CARGO_HOME/bin/$bin" /usr/local/bin/
+  done
 }
 
 # ── SSH server (non-Arch) ─────────────────────────────────────────────

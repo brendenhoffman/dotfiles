@@ -4,8 +4,13 @@ function sudo --wraps sudo
         set -l pattern (string join '' -- "--description 'alias " $argv[1] "[ =]([^']+)'")
         set -l alias_target (string match -rg -- $pattern $fn_def)
         if test -n "$alias_target"
-            # Simple alias: run the underlying binary directly — no fish subprocess needed
-            command sudo -E (string split ' ' $alias_target) $argv[2..-1]
+            # Simple alias: run the underlying binary directly — no fish subprocess needed.
+            # Resolve to an absolute path: secure_path (if set) overrides -E for PATH lookups,
+            # but a path containing a slash skips lookup entirely and always works.
+            set -l target (string split ' ' $alias_target)
+            set -l resolved (command -v -- $target[1])
+            test -n "$resolved"; and set target[1] $resolved
+            command sudo -E $target $argv[2..-1]
         else
             # Complex function: write to temp file — (string join \n) splits back into a list
             # when captured with (), so fish -c $script only ever sees the first line
