@@ -38,9 +38,20 @@ telescope.setup({
 	},
 })
 
-pcall(function()
-	telescope.load_extension("fzf")
-end)
+-- vim.pack has no build hooks; compile fzf-native on first install
+local fzf_dir = vim.fn.stdpath("data") .. "/site/pack/core/opt/telescope-fzf-native.nvim"
+if vim.fn.isdirectory(fzf_dir) == 1 and vim.fn.filereadable(fzf_dir .. "/build/libfzf.so") == 0 then
+	vim.fn.jobstart({ "make" }, {
+		cwd = fzf_dir,
+		on_exit = function(_, code)
+			if code == 0 then
+				pcall(telescope.load_extension, "fzf")
+			end
+		end,
+	})
+else
+	pcall(telescope.load_extension, "fzf")
+end
 
 -- All commits
 vim.keymap.set("n", "<leader>gc", builtin.git_commits, { desc = "Git commits (project)" })
