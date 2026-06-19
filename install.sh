@@ -130,9 +130,9 @@ arch_offer_system_upgrade_or_abort() {
   fi
 
   if ask "Run a full system upgrade now?"; then
-    if have paru; then
+    if have yay; then
       sudo_do pacman -Sy --noconfirm archlinux-keyring || true
-      paru -Syu || return 1
+      yay -Syu || return 1
     else
       sudo_do pacman -Sy --noconfirm archlinux-keyring || true
       sudo_do pacman -Syu || return 1
@@ -144,7 +144,7 @@ arch_offer_system_upgrade_or_abort() {
   fi
 }
 
-arch_setup_chaotic_and_paru() {
+arch_setup_chaotic_and_yay() {
   have pacman || return
   if grep -q '^\[chaotic-aur\]' /etc/pacman.conf 2>/dev/null; then
     msg "chaotic-aur already enabled"
@@ -169,65 +169,61 @@ EOF
     fi
   fi
 
-  if ! have paru; then
-    if sudo_do pacman -S --needed --noconfirm paru 2>/dev/null; then
-      msg "paru installed (chaotic-aur)"
+  if ! have yay; then
+    if sudo_do pacman -S --needed --noconfirm yay 2>/dev/null; then
+      msg "yay installed (chaotic-aur)"
     else
-      warn "paru from chaotic failed; attempting AUR paru-bin"
-      if ask "Build paru-bin from AUR?"; then
+      warn "yay from chaotic failed; attempting AUR yay-bin"
+      if ask "Build yay-bin from AUR?"; then
         sudo_do pacman -S --needed --noconfirm base-devel git
         local tmpdir
         tmpdir="$(mktemp -d)"
         trap 'rm -rf "$tmpdir"' EXIT
-        (cd "$tmpdir" && git clone https://aur.archlinux.org/paru-bin.git && cd paru-bin && makepkg -si --noconfirm)
-        msg "paru installed (AUR)"
+        (cd "$tmpdir" && git clone https://aur.archlinux.org/yay-bin.git && cd yay-bin && makepkg -si --noconfirm)
+        msg "yay installed (AUR)"
       else
-        warn "Skipping paru — will use pacman directly."
+        warn "Skipping yay — will use pacman directly."
       fi
     fi
   fi
+
+  setup_informant
+}
+
+setup_informant() {
+  have yay || return
+  if ! have informant; then
+    yay -S --needed --noconfirm informant || { warn "informant install failed"; return; }
+  fi
+  local target_user="${USER:-$(id -un)}"
+  sudo_do usermod -aG informant "$target_user"
+  sudo_do informant read --all
+  msg "informant installed; user added to informant group; news marked read"
 }
 
 arch_install_packages() {
   local pm=pacman
-  have paru && pm=paru
+  have yay && pm=yay
   # base-devel provides gcc/make needed for rustup to link
   sudo_do pacman -S --needed --noconfirm base-devel curl || true
   $pm -S --needed --noconfirm fish fzf zed micro ttf-jetbrains-mono-nerd || true
 }
 
-write_paru_conf() {
-  local tgt_user tgt_home
-  if [ -n "${SUDO_USER-}" ] && [ "$SUDO_USER" != "root" ]; then
-    tgt_user="$SUDO_USER"
-    tgt_home="$(getent passwd "$SUDO_USER" | cut -d: -f6)"
-  else
-    tgt_user="$USER"
-    tgt_home="$HOME"
-  fi
-  local xdg_conf="${XDG_CONFIG_HOME:-$tgt_home/.config}"
-  local dir="$xdg_conf/paru"
-  local file="$dir/paru.conf"
-  local content='[options]
-PgpFetch
-Devel
-Provides
-DevelSuffixes = -git -cvs -svn -bzr -darcs -always
-BottomUp
-RemoveMake = yes
-SkipReview
-BatchInstall
-NewsOnUpgrade
-'
-  if [ -n "${SUDO_USER-}" ] && [ "$SUDO_USER" != "root" ]; then
-    sudo -u "$tgt_user" mkdir -p "$dir"
-    printf '%s' "$content" | sudo -u "$tgt_user" tee "$file" >/dev/null
-  else
-    mkdir -p "$dir"
-    printf '%s' "$content" >"$file"
-  fi
-  chown "$tgt_user":"$tgt_user" "$file" "$dir" 2>/dev/null || true
-  msg "paru config written to $file"
+configure_yay() {
+  have yay || return
+  yay --save \
+    --removemake \
+    --pgpfetch \
+    --devel \
+    --provides \
+    --bottomup \
+    --batchinstall \
+    --cleanafter \
+    --sudoloop \
+    --noanswerdiff \
+    --noansweredit \
+    --noanswerclean
+  msg "yay config saved"
 }
 
 # ── Debian ────────────────────────────────────────────────────────────
@@ -294,7 +290,7 @@ maybe_install_neovim() {
   have pacman || return 0
   ask "Install Neovim and tree-sitter-cli?" || return 0
   local pm=pacman
-  have paru && pm=paru
+  have yay && pm=yay
   $pm -S --needed --noconfirm neovim tree-sitter-cli || true
 }
 
@@ -415,9 +411,9 @@ main() {
 
   if have pacman; then
     if arch_offer_system_upgrade_or_abort; then
-      arch_setup_chaotic_and_paru
+      arch_setup_chaotic_and_yay
       arch_install_packages
-      write_paru_conf
+      configure_yay
     else
       warn "Skipping Arch package installs."
     fi
