@@ -13,7 +13,10 @@ function sudo --wraps sudo
             command sudo -E $target $argv[2..-1]
         else
             # Complex function: write to temp file — (string join \n) splits back into a list
-            # when captured with (), so fish -c $script only ever sees the first line
+            # when captured with (), so fish -c $script only ever sees the first line.
+            # Inject our own PATH explicitly so the function body has the same tools
+            # available as your interactive shell, consistent with how the alias and
+            # bare-command branches resolve commands below.
             set -l tmp (mktemp /tmp/sudo_fish.XXXXXX)
             printf '%s\n' 'set -gx _SUDO_FISH_EXPAND 1' "set -gx PATH "(string join ' ' $PATH) $fn_def (string join ' ' -- (string escape -- $argv)) > $tmp
             command sudo -E fish $tmp
@@ -22,6 +25,12 @@ function sudo --wraps sudo
             return $ret
         end
     else
+        # Bare command: resolve to an absolute path too, for the same reason as the
+        # alias branch — secure_path (if set) would otherwise hide $CARGO_HOME/bin etc.
+        if test (count $argv) -gt 0
+            set -l resolved (command -v -- $argv[1])
+            test -n "$resolved"; and set argv[1] $resolved
+        end
         command sudo $argv
     end
 end
