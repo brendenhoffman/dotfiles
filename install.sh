@@ -208,9 +208,9 @@ configure_yay() {
     --batchinstall \
     --cleanafter \
     --sudoloop \
-    --noanswerdiff \
-    --noansweredit \
-    --noanswerclean
+    --answerdiff None \
+    --answeredit None \
+    --answerclean None
   msg "yay config saved"
 }
 
