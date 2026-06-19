@@ -307,11 +307,12 @@ install_cargo_tools() {
   # Root-owned copies in /usr/local/bin so these resolve under sudo on any
   # machine's default secure_path (which virtually always includes it),
   # without ever trusting the user-writable $CARGO_HOME/bin for root's PATH.
+  # The binary list is shared with scripts/update so the two can't drift.
   local bin
-  for bin in bat fd rg zoxide lsd zellij starship delta; do
+  while IFS= read -r bin; do
     [ -x "$CARGO_HOME/bin/$bin" ] || continue
     sudo_do install -o root -g root -m 0755 "$CARGO_HOME/bin/$bin" /usr/local/bin/
-  done
+  done < "$SCRIPTS_DIR/cargo-system-bins"
 }
 
 # ── SSH server (non-Arch) ─────────────────────────────────────────────

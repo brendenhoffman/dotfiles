@@ -10,7 +10,8 @@ rustup update
 cargo install-update -a
 
 cargo_bin="${CARGO_HOME:-$HOME/.local/share/cargo}/bin"
-for bin in bat fd rg zoxide lsd zellij starship delta; do
+scripts_dir=$(dirname "$(readlink -f "$0")")
+while IFS= read -r bin; do
   [ -x "$cargo_bin/$bin" ] || continue
   sudo install -o root -g root -m 0755 "$cargo_bin/$bin" /usr/local/bin/
-done
+done < "$scripts_dir/cargo-system-bins"
