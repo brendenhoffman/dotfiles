@@ -9,6 +9,7 @@ NEED_LINK_DIRS=(
   ".config/starship.toml"
   ".config/yay"
   ".config/nvim"
+  ".config/zed"
 )
 
 SCRIPTS_DIR="$REPO_DIR/scripts"
