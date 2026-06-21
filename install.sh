@@ -390,7 +390,7 @@ install_cargo_tools() {
 
 # ── SSH server (non-Arch) ─────────────────────────────────────────────
 ensure_sshd() {
-  ask "Set up SSH server (install, enable, allow root login)?" || return 0
+  ask "Set up SSH server (install and enable sshd)?" || return 0
   local svc=sshd
   if have apt-get; then
     sudo_do apt-get install -y openssh-server
@@ -401,11 +401,6 @@ ensure_sshd() {
     sudo_do apk add --no-cache openssh
   fi
 
-  local cfg=/etc/ssh/sshd_config
-  sudo_do sed -i 's/^#\?PermitRootLogin.*/PermitRootLogin yes/' "$cfg"
-  sudo_do grep -q 'PermitRootLogin' "$cfg" 2>/dev/null || \
-    printf 'PermitRootLogin yes\n' | sudo_do tee -a "$cfg" >/dev/null
-
   if have rc-service; then
     sudo_do rc-update add sshd default
     sudo_do rc-service sshd restart
@@ -413,7 +408,7 @@ ensure_sshd() {
     sudo_do systemctl enable "$svc"
     sudo_do systemctl restart "$svc"
   fi
-  msg "sshd: enabled, started, root login permitted"
+  msg "sshd: enabled and started"
 }
 
 # ── npm XDG ───────────────────────────────────────────────────────────
