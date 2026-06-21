@@ -324,10 +324,43 @@ bootstrap_rust() {
 # ── Neovim (Arch only — other distros ship versions too old for nvim 12) ──
 maybe_install_neovim() {
   have pacman || return 0
-  ask "Install Neovim and tree-sitter-cli?" || return 0
-  local pm=pacman
-  have yay && pm=yay
-  $pm -S --needed --noconfirm neovim tree-sitter-cli || true
+
+  local pkgs_ok=true
+  local link_ok=true
+  local missing_pkgs=()
+
+  for pkg in neovim tree-sitter-cli; do
+    pacman -Q "$pkg" &>/dev/null || { pkgs_ok=false; missing_pkgs+=("$pkg"); }
+  done
+
+  local nvim_link="$HOME/.config/nvim"
+  local nvim_target="$REPO_DIR/.config/nvim"
+  if [ ! -L "$nvim_link" ] || [ "$(readlink "$nvim_link")" != "$nvim_target" ]; then
+    link_ok=false
+  fi
+
+  # All good, nothing to do
+  $pkgs_ok && $link_ok && return 0
+
+  # Build a human-readable summary of what's missing
+  local missing_desc=""
+  $pkgs_ok || missing_desc="packages: ${missing_pkgs[*]}"
+  if ! $link_ok; then
+    [ -n "$missing_desc" ] && missing_desc="$missing_desc, "
+    missing_desc="${missing_desc}.config/nvim not linked"
+  fi
+
+  ask "Neovim not fully set up ($missing_desc). Install/link now?" || return 0
+
+  if ! $pkgs_ok; then
+    local pm=pacman
+    have yay && pm=yay
+    $pm -S --needed --noconfirm "${missing_pkgs[@]}" || true
+  fi
+
+  if ! $link_ok; then
+    link_dir ".config/nvim"
+  fi
 }
 
 install_cargo_tools() {
