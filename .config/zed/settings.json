@@ -1,4 +1,6 @@
 {
+  "document_folding_ranges": "on",
+  "semantic_tokens": "combined",
   "collaboration_panel": {
     "button": false
   },
@@ -64,6 +66,14 @@
   },
   "use_smartcase_search": true,
   "languages": {
+    "Shell Script": {
+      "indent_guides": {
+        "line_width": 2,
+        "coloring": "indent_aware",
+        "background_coloring": "disabled"
+      },
+      "hard_tabs": false
+    },
     "C++": {
       "format_on_save": "on"
     },
