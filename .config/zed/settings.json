@@ -13,7 +13,7 @@
   "agent": {
     "default_model": {
       "provider": "ollama",
-      "model": "qwen3-coder:latest",
+      "model": "hf.co/unsloth/gemma-4-26B-A4B-it-qat-GGUF:UD-Q4_K_XL",
       "enable_thinking": false,
     },
     "flexible": true,
@@ -174,7 +174,7 @@
   },
   "language_models": {
     "ollama": {
-      "api_url": "http://localhost:11434",
+      "api_url": "http://pulsar.dimension:11434",
       "auto_discover": true,
       "context_window": 131072,
       "available_models": [
