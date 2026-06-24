@@ -1,6 +1,8 @@
 #!/bin/sh
 MANBIN=/usr/bin/man
 BASE=https://man.archlinux.org
+CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/man-remote"
+ORDER="1 1p n l 8 3 3p 0 0p 2 3type 5 4 9 6 7"
 
 case "$1" in ''|-*) exec "$MANBIN" "$@";; esac
 
@@ -8,19 +10,36 @@ section=
 case "$1" in [1-9]|[1-9][A-Za-z]) section="$1"; shift;; esac
 page="$1"; shift 2>/dev/null||true
 
-[ -n "$section" ]&&"$MANBIN" -w "$section" "$page" >/dev/null 2>&1&&exec "$MANBIN" "$section" "$page" "$@"
-[ -z "$section" ]&&"$MANBIN" -w "$page" >/dev/null 2>&1&&exec "$MANBIN" "$page" "$@"
+# support "page.section" form (e.g. "fd.1") when section wasn't given separately
+[ -z "$section" ]&&case "$page" in *.[1-9]|*.[1-9][A-Za-z]) section="${page##*.}";page="${page%.*}";;esac
+
+if [ -n "$section" ]; then
+    [ -s "$CACHE_DIR/$page.$section" ]&&exec "$MANBIN" -l "$CACHE_DIR/$page.$section"
+    "$MANBIN" -w "$section" "$page" >/dev/null 2>&1&&exec "$MANBIN" "$section" "$page" "$@"
+else
+    # cache first (so a previously-fetched remote page wins over an
+    # unrelated local match, e.g. fd(4) floppy disk vs the real fd(1)),
+    # then let man search system sections itself
+    for s in $ORDER; do
+        [ -s "$CACHE_DIR/$page.$s" ]&&exec "$MANBIN" -l "$CACHE_DIR/$page.$s"
+    done
+    "$MANBIN" -w "$page" >/dev/null 2>&1&&exec "$MANBIN" "$page" "$@"
+fi
 
 tmp=$(mktemp "${TMPDIR:-/tmp}/man.XXXXXX")||exit 2
 trap 'rm -f "$tmp"' EXIT INT TERM
 
-fetch(){ curl -fsSL --max-time 3 "$1" -o "$tmp"&&[ -s "$tmp" ]&&exec "$MANBIN" -l "$tmp"; }
+fetch(){
+    curl -fsSL --max-time 3 "$1" -o "$tmp"&&[ -s "$tmp" ]||return 1
+    mkdir -p "$CACHE_DIR" 2>/dev/null&&cp "$tmp" "$CACHE_DIR/$2" 2>/dev/null
+    exec "$MANBIN" -l "$tmp"
+}
 
 printf 'man: not found locally; trying man.archlinux.org\n' >&2
 if [ -n "$section" ]; then
-    fetch "$BASE/man/$page.$section.en.raw"
+    fetch "$BASE/man/$page.$section.en.raw" "$page.$section"
 else
-    for s in 1 8 5 7 3 2 4; do fetch "$BASE/man/$page.$s.en.raw"||true; done
+    for s in $ORDER; do fetch "$BASE/man/$page.$s.en.raw" "$page.$s"||true; done
 fi
 printf 'man: remote page not found: %s\n' "$page${section:+($section)}" >&2
 exit 16

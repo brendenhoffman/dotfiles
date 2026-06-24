@@ -32,6 +32,20 @@ ask() {
   case "${a,,}" in y|yes|"") return 0 ;; *) return 1 ;; esac
 }
 
+# ── deny root access ──────────────────────────────────────────────────────
+require_non_root() {
+  if [ "$(id -u)" -eq 0 ]; then
+    if [ -n "${SUDO_USER:-}" ]; then
+      err "You ran this via sudo."
+      err "Run it as: su - $SUDO_USER"
+      err "Then: ./install.sh"
+    else
+      err "Run this as a normal user with sudo access."
+    fi
+    exit 1
+  fi
+}
+
 # ── sudo access ──────────────────────────────────────────────────────
 # Debian (and others) don't always add the first user to sudo by default,
 # unlike Arch/RHEL images. Fail fast with a fix instead of dying confusingly
@@ -359,7 +373,7 @@ maybe_install_neovim() {
   fi
 
   if ! $link_ok; then
-    link_dir ".config/nvim"
+    link_into_home ".config/nvim"
   fi
 }
 
@@ -567,6 +581,8 @@ deploy_scripts() {
 
 # ── Main ──────────────────────────────────────────────────────────────
 main() {
+  require_non_root
+  ensure_sudo_access
   ensure_git_early
   ensure_repo
   mkdir -p "$BACKUP_DIR"
@@ -596,7 +612,6 @@ main() {
   fi
 
   # Shared across all distros
-  ensure_sudo_access
   ensure_npm_xdg
   ensure_wget_xdg
   migrate_legacy_dotdirs
