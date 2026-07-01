@@ -1,4 +1,13 @@
 {
+  "context_servers": {
+    "cardflow": {
+      "enabled": true,
+      "url": "https://cardai.zenren.xyz/mcp",
+      "headers": {
+        "Authorization": "Bearer REDACTED",
+      },
+    },
+  },
   "document_folding_ranges": "on",
   "semantic_tokens": "combined",
   "collaboration_panel": {
@@ -11,6 +20,13 @@
     "git_gutter": "tracked_files",
   },
   "agent": {
+    "tool_permissions": {
+      "tools": {
+        "mcp:cardflow:list_cards": {
+          "default": "allow",
+        },
+      },
+    },
     "default_model": {
       "provider": "ollama",
       "model": "hf.co/unsloth/gemma-4-26B-A4B-it-qat-GGUF:UD-Q4_K_XL",
@@ -77,6 +93,11 @@
   },
   "use_smartcase_search": true,
   "languages": {
+    "Rust": {
+      "prettier": {
+        "allowed": false
+      }
+    },
     "Shell Script": {
       "indent_guides": {
         "line_width": 2,
@@ -188,9 +209,8 @@
         {
           "name": "hf.co/unsloth/gemma-4-26B-A4B-it-qat-GGUF:UD-Q4_K_XL",
           "display_name": "Gemma 4 26B",
-          "max_tokens": 32768,
+          "max_tokens": 131072,
           "supports_tools": true,
-          "supports_images": true,
           "keep_alive": 30,
         },
       ],

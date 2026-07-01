@@ -53,6 +53,7 @@ alias ga='git add .'
 alias gc='git commit -s -m'
 alias gp='git push'
 alias gs='git status'
+alias gpull='git fetch origin && git reset --hard origin/(git branch --show-current)'
 
 # ── sudo wrappers ──────────────────────────────────────────────────────
 alias visudo='sudo visudo'
