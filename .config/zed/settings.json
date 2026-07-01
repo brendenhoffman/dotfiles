@@ -1,11 +1,11 @@
 {
   "context_servers": {
     "cardflow": {
+      "oauth": {
+        "client_id": "cardflow-mcp"
+      },
       "enabled": true,
       "url": "https://cardai.zenren.xyz/mcp",
-      "headers": {
-        "Authorization": "Bearer REDACTED",
-      },
     },
   },
   "document_folding_ranges": "on",
@@ -22,6 +22,12 @@
   "agent": {
     "tool_permissions": {
       "tools": {
+        "mcp:cardflow:list_decks": {
+          "default": "allow"
+        },
+        "mcp:cardflow:list_games": {
+          "default": "allow"
+        },
         "mcp:cardflow:list_cards": {
           "default": "allow",
         },
