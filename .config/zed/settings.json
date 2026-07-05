@@ -99,6 +99,9 @@
   },
   "use_smartcase_search": true,
   "languages": {
+    "WIT": {
+      "enable_language_server": false
+    },
     "Rust": {
       "prettier": {
         "allowed": false
@@ -145,7 +148,7 @@
   },
   "scrollbar": {
     "axes": {
-      "vertical": false,
+      "vertical": true,
     },
     "cursors": true,
     "show": "system",
