@@ -20,26 +20,10 @@ alias ls='lsd -ah --group-directories-first'
 alias ll='lsd -alF --group-directories-first'
 
 # ── pager / viewer ─────────────────────────────────────────────────────
-function less
-    set -l cmd (string split ' ' -- $PAGER)
-    $cmd $argv
-end
-
-function more
-    set -l cmd (string split ' ' -- $PAGER)
-    $cmd $argv
-end
-
+# less, more (functions/less.fish, functions/more.fish)
 alias cat='bat -P'
 alias man='man-remote'
-
-function diff --wraps diff
-    if command -q zeditor; or command -q zed-editor; or command -q zed; or command -q zedit
-        zed -diff $argv
-    else
-        delta $argv
-    end
-end
+# diff (functions/diff.fish)
 
 # ── search / filter ────────────────────────────────────────────────────
 alias grep='rg'
@@ -49,11 +33,11 @@ alias find='fd -H'
 
 # ── git ────────────────────────────────────────────────────────────────
 alias g='git'
-alias ga='git add .'
+alias ga='git add -A'
 alias gc='git commit -s -m'
 alias gp='git push'
 alias gs='git status'
-alias gpull='git fetch origin && git reset --hard origin/(git branch --show-current)'
+# gpull (functions/gpull.fish)
 
 # ── sudo wrappers ──────────────────────────────────────────────────────
 alias visudo='sudo visudo'
@@ -72,7 +56,7 @@ alias dd='sudo dd status=progress'
 
 # ── system ─────────────────────────────────────────────────────────────
 alias logout='sudo pkill -u $USER'
-alias shutdown='shutdown now'
+# shutdown (functions/shutdown.fish)
 alias suspend='sudo systemctl suspend'
 alias errlog='journalctl -p err -e'
 alias rmr='rm -r'
@@ -85,24 +69,11 @@ alias mocp='mocp -M $XDG_CONFIG_HOME/moc/'
 alias updatedots='bash ~/.local/git/dotfiles/install.sh'
 
 # ── Arch-specific ──────────────────────────────────────────────────────
-alias p='yay'
+# 'p' is a function (see functions/p.fish): bare 'p' runs the update script,
+# 'p <args>' passes through to the yay/paru wrapper.
 alias pp='yay -S'
 alias pr='yay -Rns'
 alias pu='update'
 alias paclck='sudo rm /var/lib/pacman/db.lck'
 alias update-grub='sudo grub-mkconfig -o /boot/grub/grub.cfg'
-
-# Needs fish command substitution syntax, not $()
-function pro
-    sudo pacman -Rns (pacman -Qtdq) $argv
-end
-
-function srcinfo
-    makepkg --printsrcinfo $argv > .SRCINFO
-end
-
-# command prefix avoids recursive call into this wrapper
-function printenv
-    set -l cmd (string split ' ' -- $PAGER)
-    command printenv $argv | $cmd
-end
+# pro, srcinfo, printenv (functions/pro.fish, functions/srcinfo.fish, functions/printenv.fish)

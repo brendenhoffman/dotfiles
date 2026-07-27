@@ -30,7 +30,16 @@ set -gx JAVA_TOOL_OPTIONS "-Djava.util.prefs.userRoot=$XDG_CONFIG_HOME/java"
 set -gx LESSHISTFILE $XDG_CACHE_HOME/.lesshst
 
 set -gx MOZ_WEBRENDER    1
-set -gx XAUTHORITY       $XDG_CACHE_HOME/.Xauthority
+# KDE/sddm generates a per-session Xauthority under XDG_RUNTIME_DIR
+# (e.g. xauth_teDIeE); prefer that over the static fallback when present.
+# (fish's `set` swallows a non-matching glob silently, so this is safe
+# even when XDG_RUNTIME_DIR/xauth_* doesn't exist.)
+set -l kde_xauth $XDG_RUNTIME_DIR/xauth_*
+if test -n "$kde_xauth"
+    set -gx XAUTHORITY $kde_xauth[1]
+else
+    set -gx XAUTHORITY $XDG_CACHE_HOME/.Xauthority
+end
 set -gx GTK2_RC_FILES    $HOME/.config/gtk-2.0/gtkrc
 set -gx PULSE_COOKIE     $HOME/.config/pulse/cookie
 set -gx SSH_ASKPASS      /usr/bin/ksshaskpass
