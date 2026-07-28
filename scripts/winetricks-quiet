@@ -1,0 +1,4 @@
+#!/bin/bash
+#GTK_THEME=Materia-dark /sbin/winetricks "$@" --gui=zenity -q
+/sbin/winetricks "$@" -q -f
+

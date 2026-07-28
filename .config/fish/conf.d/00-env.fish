@@ -57,3 +57,4 @@ set -gx BAT_PAGER 'less -R --search-options=W'
 set -gx MANPAGER manpager
 set -gx MANROFFOPT '-c'
 set -gx DIFFPROG 'delta'
+set -gx WINETRICKS $HOME/.local/bin/winetricks-quiet
