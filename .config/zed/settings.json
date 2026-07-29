@@ -192,6 +192,9 @@
   "ensure_final_newline_on_save": true,
   "agent_servers": {
     "claude-acp": {
+      "default_config_options": {
+        "mode": "auto"
+      },
       "type": "registry",
     },
   },
