@@ -384,7 +384,7 @@ maybe_install_neovim() {
   local missing_pkgs=()
 
   if have pacman; then
-    for pkg in neovim tree-sitter-cli; do
+    for pkg in neovim; do
       pacman -Q "$pkg" &>/dev/null || { pkgs_ok=false; missing_pkgs+=("$pkg"); }
     done
   else
@@ -441,7 +441,7 @@ install_cargo_tools() {
 
   msg "Installing Rust tools via cargo-binstall"
   cargo binstall --no-confirm \
-    bat fd-find ripgrep zoxide lsd zellij starship cargo-update git-delta
+    bat fd-find ripgrep zoxide lsd zellij starship cargo-update git-delta tree-sitter-cli
 
   # Root-owned copies in /usr/local/bin so these resolve under sudo on any
   # machine's default secure_path (which virtually always includes it),
