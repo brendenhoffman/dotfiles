@@ -15,8 +15,11 @@ if test (id -u) -eq 0
     return
 end
 
-# fish_add_path is idempotent: adds entries to $fish_user_paths only if absent.
-# Prepend so our local installs shadow system copies.
-fish_add_path $HOME/.local/bin
-fish_add_path $CARGO_HOME/bin
-fish_add_path $GOBIN
+# --move forces these to the front even if environment.d/20-path.conf
+# already appended them to $PATH (PAM runs before fish does) — without it,
+# fish_add_path no-ops on dirs already present and leaves them wherever
+# PAM put them, letting system copies shadow our local installs instead
+# of the other way around.
+fish_add_path --move $HOME/.local/bin
+fish_add_path --move $CARGO_HOME/bin
+fish_add_path --move $GOBIN

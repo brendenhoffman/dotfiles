@@ -455,12 +455,25 @@ install_cargo_tools() {
 }
 
 # ── SSH server (non-Arch) ─────────────────────────────────────────────
+sshd_ready() {
+  if have rc-service; then
+    rc-update show default 2>/dev/null | grep -q sshd || return 1
+    rc-service sshd status >/dev/null 2>&1
+  else
+    systemctl is-enabled --quiet "$1" 2>/dev/null || return 1
+    systemctl is-active --quiet "$1" 2>/dev/null
+  fi
+}
+
 ensure_sshd() {
-  ask "Set up SSH server (install and enable sshd)?" || return 0
   local svc=sshd
+  have apt-get && svc=ssh
+
+  sshd_ready "$svc" && { msg "sshd already enabled and running; skipping."; return 0; }
+
+  ask "Set up SSH server (install and enable sshd)?" || return 0
   if have apt-get; then
     sudo_do apt-get install -y openssh-server
-    svc=ssh
   elif have dnf; then
     sudo_do dnf install -y openssh-server
   elif have apk; then
