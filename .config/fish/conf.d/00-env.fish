@@ -1,8 +1,19 @@
 # GPG needs the real tty, not $TTY which isn't set in fish
 set -gx GPG_TTY (tty)
 
-# Toolchain homes — mirror what .zprofile exports for zsh sessions.
-# (XDG base dirs themselves come from environment.d/10-xdg.conf via PAM.)
+# XDG base dirs normally come from environment.d/10-xdg.conf via PAM
+# (pam_systemd), but that import depends on the login method's PAM stack
+# wiring pam_systemd.so in — e.g. Debian's stock sshd PAM config doesn't,
+# so SSH sessions never get it. Fall back to the same spec defaults here
+# so downstream vars like CARGO_HOME don't silently collapse to unset.
+set -q XDG_CONFIG_HOME; or set -gx XDG_CONFIG_HOME $HOME/.config
+set -q XDG_CACHE_HOME;  or set -gx XDG_CACHE_HOME  $HOME/.cache
+set -q XDG_DATA_HOME;   or set -gx XDG_DATA_HOME   $HOME/.local/share
+set -q XDG_STATE_HOME;  or set -gx XDG_STATE_HOME  $HOME/.local/state
+set -q XDG_BIN_HOME;    or set -gx XDG_BIN_HOME    $HOME/.local/bin
+set -q XDG_OPT_HOME;    or set -gx XDG_OPT_HOME    $HOME/.local/opt
+
+# Toolchain homes
 set -gx CARGO_HOME  $XDG_DATA_HOME/cargo
 set -gx RUSTUP_HOME $XDG_DATA_HOME/rustup
 set -gx GOPATH $XDG_DATA_HOME/go

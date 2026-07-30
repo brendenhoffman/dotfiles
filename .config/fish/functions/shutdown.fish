@@ -2,8 +2,8 @@
 # of landing after a hardcoded 'now'
 function shutdown --wraps shutdown --description 'shut down now, or pass args through'
     if test (count $argv) -eq 0
-        command shutdown now
+        command sudo shutdown now
     else
-        command shutdown $argv
+        command sudo shutdown $argv
     end
 end
