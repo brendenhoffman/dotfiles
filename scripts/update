@@ -1,11 +1,29 @@
 #!/bin/sh
 set -e
+update_nvim_release() {
+  ver=$(nvim --version 2>/dev/null | head -1 | sed -n 's/^NVIM v0\.\([0-9]*\).*/\1/p')
+  [ -n "$ver" ] && [ "$ver" -ge 12 ] && return
+  case "$(uname -m)" in
+    x86_64) asset=nvim-linux-x86_64.tar.gz ;;
+    aarch64) asset=nvim-linux-arm64.tar.gz ;;
+    *) return ;;
+  esac
+  tmp=$(mktemp -d)
+  curl -fsSL "https://github.com/neovim/neovim/releases/latest/download/$asset" -o "$tmp/nvim.tar.gz" || { rm -rf "$tmp"; return; }
+  tar -xzf "$tmp/nvim.tar.gz" -C "$tmp"
+  dest="${XDG_DATA_HOME:-$HOME/.local/share}/nvim-release"
+  rm -rf "$dest"
+  mv "$tmp"/nvim-linux-*/ "$dest"
+  mkdir -p "$HOME/.local/bin"
+  ln -sfn "$dest/bin/nvim" "$HOME/.local/bin/nvim"
+  rm -rf "$tmp"
+}
 if   command -v yay     >/dev/null 2>&1; then yay -Syu
 elif command -v paru    >/dev/null 2>&1; then paru -Syu
 elif command -v pacman  >/dev/null 2>&1; then sudo pacman -Syu
-elif command -v apt-get >/dev/null 2>&1; then sudo apt-get update && sudo apt-get full-upgrade -y
-elif command -v dnf     >/dev/null 2>&1; then sudo dnf upgrade -y
-elif command -v apk     >/dev/null 2>&1; then sudo apk upgrade; fi
+elif command -v apt-get >/dev/null 2>&1; then sudo apt-get update && sudo apt-get full-upgrade -y; update_nvim_release
+elif command -v dnf     >/dev/null 2>&1; then sudo dnf upgrade -y; update_nvim_release
+elif command -v apk     >/dev/null 2>&1; then sudo apk upgrade; update_nvim_release; fi
 rustup update
 cargo install-update -a
 

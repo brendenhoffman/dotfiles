@@ -335,17 +335,61 @@ bootstrap_rust() {
   rustup component add rustfmt 2>/dev/null || true
 }
 
-# ── Neovim (Arch only — other distros ship versions too old for nvim 12) ──
-maybe_install_neovim() {
-  have pacman || return 0
+# ── Neovim ──────────────────────────────────────────────────────────
+# The nvim config needs vim.pack (native plugin manager), which requires
+# Neovim >=0.12 — newer than what any distro but Arch packages. Arch gets
+# it from pacman; everywhere else we pull the official release tarball,
+# since e.g. Debian 13 only ships 0.10.
+NVIM_MIN_MINOR=12
 
+nvim_version_ok() {
+  have nvim || return 1
+  local ver minor
+  ver="$(nvim --version 2>/dev/null | head -1 | grep -oP '(?<=NVIM v)[0-9]+\.[0-9]+' || true)"
+  minor="${ver#0.}"
+  [ -n "$minor" ] && [ "$minor" -ge "$NVIM_MIN_MINOR" ] 2>/dev/null
+}
+
+install_neovim_release() {
+  nvim_version_ok && return 0
+
+  local asset
+  case "$(uname -m)" in
+    x86_64) asset=nvim-linux-x86_64.tar.gz ;;
+    aarch64) asset=nvim-linux-arm64.tar.gz ;;
+    *) warn "No prebuilt neovim release for arch $(uname -m); skipping"; return 1 ;;
+  esac
+
+  msg "Installing neovim >=0.$NVIM_MIN_MINOR from upstream release ($asset)"
+  local tmpdir dest
+  tmpdir="$(mktemp -d)"
+  trap 'rm -rf "$tmpdir"' EXIT
+  if ! curl -fsSL "https://github.com/neovim/neovim/releases/latest/download/$asset" -o "$tmpdir/nvim.tar.gz"; then
+    warn "Failed to download neovim release; skipping"
+    return 1
+  fi
+  tar -xzf "$tmpdir/nvim.tar.gz" -C "$tmpdir"
+
+  dest="${XDG_DATA_HOME:-$HOME/.local/share}/nvim-release"
+  rm -rf "$dest"
+  mv "$tmpdir"/nvim-linux-*/ "$dest"
+  mkdir -p "$LOCAL_BIN"
+  ln -sfn "$dest/bin/nvim" "$LOCAL_BIN/nvim"
+  msg "nvim linked: $LOCAL_BIN/nvim -> $dest/bin/nvim"
+}
+
+maybe_install_neovim() {
   local pkgs_ok=true
   local link_ok=true
   local missing_pkgs=()
 
-  for pkg in neovim tree-sitter-cli; do
-    pacman -Q "$pkg" &>/dev/null || { pkgs_ok=false; missing_pkgs+=("$pkg"); }
-  done
+  if have pacman; then
+    for pkg in neovim tree-sitter-cli; do
+      pacman -Q "$pkg" &>/dev/null || { pkgs_ok=false; missing_pkgs+=("$pkg"); }
+    done
+  else
+    nvim_version_ok || pkgs_ok=false
+  fi
 
   local nvim_link="$HOME/.config/nvim"
   local nvim_target="$REPO_DIR/.config/nvim"
@@ -358,7 +402,11 @@ maybe_install_neovim() {
 
   # Build a human-readable summary of what's missing
   local missing_desc=""
-  $pkgs_ok || missing_desc="packages: ${missing_pkgs[*]}"
+  if ! $pkgs_ok; then
+    if have pacman; then missing_desc="packages: ${missing_pkgs[*]}"
+    else missing_desc="nvim missing or older than 0.$NVIM_MIN_MINOR"
+    fi
+  fi
   if ! $link_ok; then
     [ -n "$missing_desc" ] && missing_desc="$missing_desc, "
     missing_desc="${missing_desc}.config/nvim not linked"
@@ -367,9 +415,13 @@ maybe_install_neovim() {
   ask "Neovim not fully set up ($missing_desc). Install/link now?" || return 0
 
   if ! $pkgs_ok; then
-    local pm=pacman
-    have yay && pm=yay
-    $pm -S --needed --noconfirm "${missing_pkgs[@]}" || true
+    if have pacman; then
+      local pm=pacman
+      have yay && pm=yay
+      $pm -S --needed --noconfirm "${missing_pkgs[@]}" || true
+    else
+      install_neovim_release || true
+    fi
   fi
 
   if ! $link_ok; then
