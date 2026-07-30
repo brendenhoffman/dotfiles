@@ -13,11 +13,12 @@ set -q XDG_STATE_HOME;  or set -gx XDG_STATE_HOME  $HOME/.local/state
 set -q XDG_BIN_HOME;    or set -gx XDG_BIN_HOME    $HOME/.local/bin
 set -q XDG_OPT_HOME;    or set -gx XDG_OPT_HOME    $HOME/.local/opt
 
-# Toolchain homes
-set -gx CARGO_HOME  $XDG_DATA_HOME/cargo
-set -gx RUSTUP_HOME $XDG_DATA_HOME/rustup
-set -gx GOPATH $XDG_DATA_HOME/go
-set -gx GOBIN  $HOME/.local/bin
+# Toolchain homes — normally from environment.d/15-toolchains.conf; same
+# fallback reasoning as the XDG block above.
+set -q CARGO_HOME;  or set -gx CARGO_HOME  $XDG_DATA_HOME/cargo
+set -q RUSTUP_HOME; or set -gx RUSTUP_HOME $XDG_DATA_HOME/rustup
+set -q GOPATH;      or set -gx GOPATH      $XDG_DATA_HOME/go
+set -q GOBIN;       or set -gx GOBIN       $HOME/.local/bin
 
 set -gx NPM_CONFIG_USERCONFIG $XDG_CONFIG_HOME/npm/npmrc
 set -gx NPM_CONFIG_CACHE      $XDG_CACHE_HOME/npm
