@@ -274,8 +274,12 @@ configure_yay() {
 }
 
 # ── Debian ────────────────────────────────────────────────────────────
-debian_offer_system_upgrade_nonfatal() {
+debian_refresh_index() {
   sudo_do apt-get update -qq
+}
+
+debian_offer_system_upgrade_nonfatal() {
+  debian_refresh_index
   local upg
   upg=$(apt list --upgradeable 2>/dev/null | sed -n '1!p' || true)
   if [ -n "$upg" ]; then
@@ -376,6 +380,15 @@ install_neovim_release() {
   mkdir -p "$LOCAL_BIN"
   ln -sfn "$dest/bin/nvim" "$LOCAL_BIN/nvim"
   msg "nvim linked: $LOCAL_BIN/nvim -> $dest/bin/nvim"
+
+  # 01-path.fish strips ~/.local/bin from a root shell's PATH on principle
+  # (never trust a user-writable dir there, sudo-preserved-$HOME or not).
+  # For a root session, $dest is root-owned already, so a second symlink
+  # under /usr/local/bin is exactly as trustworthy and closes that gap.
+  if [ "$(id -u)" -eq 0 ]; then
+    ln -sfn "$dest/bin/nvim" /usr/local/bin/nvim
+    msg "nvim linked: /usr/local/bin/nvim -> $dest/bin/nvim"
+  fi
 }
 
 maybe_install_neovim() {
@@ -626,7 +639,15 @@ maybe_chsh_to_fish() {
 deploy_scripts() {
   [ -d "$SCRIPTS_DIR" ] || { msg "No scripts/ dir; skipping"; return; }
   mkdir -p "$LOCAL_BIN"
-  local rel src base dest lnk tgt
+
+  # 01-path.fish strips ~/.local/bin from a root shell's PATH on principle.
+  # For a root session $SCRIPTS_DIR is root-owned already (it's under
+  # $REPO_DIR, cloned as root), so mirroring into /usr/local/bin is exactly
+  # as trustworthy and closes that gap the same way cargo tools do.
+  local root_mirror=false
+  [ "$(id -u)" -eq 0 ] && root_mirror=true
+
+  local rel src base dest
   while IFS= read -r rel; do
     src="$SCRIPTS_DIR/$rel"
     base="$(basename "$rel")"
@@ -635,18 +656,35 @@ deploy_scripts() {
     [ -f "$dest" ] && [ ! -L "$dest" ] && backup_if_needed "$dest"
     ln -sfn "$src" "$dest"
     msg "linked $dest -> $src"
+    $root_mirror && ln -sfn "$src" "/usr/local/bin/$base"
   done < <(cd "$SCRIPTS_DIR" && find . -type f -perm -111 -printf '%P\n' | sort)
-  while IFS= read -r lnk; do
-    tgt="$(readlink -f "$lnk" 2>/dev/null || true)"
-    if [ -n "$tgt" ] && printf '%s' "$tgt" | grep -q "^$SCRIPTS_DIR/"; then
-      [ -e "$tgt" ] || { rm -f "$lnk"; msg "removed stale link: $lnk"; }
-    fi
-  done < <(find "$LOCAL_BIN" -maxdepth 1 -type l -print)
+
+  local scan_dirs=("$LOCAL_BIN")
+  $root_mirror && scan_dirs+=("/usr/local/bin")
+  local scan_dir lnk tgt
+  for scan_dir in "${scan_dirs[@]}"; do
+    while IFS= read -r lnk; do
+      tgt="$(readlink -f "$lnk" 2>/dev/null || true)"
+      if [ -n "$tgt" ] && printf '%s' "$tgt" | grep -q "^$SCRIPTS_DIR/"; then
+        [ -e "$tgt" ] || { rm -f "$lnk"; msg "removed stale link: $lnk"; }
+      fi
+    done < <(find "$scan_dir" -maxdepth 1 -type l -print)
+  done
 }
 
 # ── Main ──────────────────────────────────────────────────────────────
 main() {
-  require_non_root
+  local pve=false
+  [ "${1:-}" = "--pve" ] && pve=true
+
+  # --pve targets a Proxmox VE host: Debian-based, root-only by design (no
+  # sudo in normal use), no desktop, and its own upgrade/repo discipline
+  # that install.sh has no business overriding.
+  if $pve; then
+    [ "$(id -u)" -eq 0 ] || { err "--pve expects to run as root (that's the normal PVE login)."; exit 1; }
+  else
+    require_non_root
+  fi
   ensure_sudo_access
   ensure_git_early
   ensure_repo
@@ -663,7 +701,11 @@ main() {
       warn "Skipping Arch package installs."
     fi
   elif have apt-get; then
-    debian_offer_system_upgrade_nonfatal
+    if $pve; then
+      debian_refresh_index
+    else
+      debian_offer_system_upgrade_nonfatal
+    fi
     debian_install_packages
     ensure_sshd
   elif have dnf; then
@@ -683,7 +725,7 @@ main() {
   bootstrap_rust
   install_cargo_tools
   maybe_install_neovim
-  configure_visudo_editor
+  $pve || configure_visudo_editor
 
   maybe_chsh_to_fish
   deploy_scripts

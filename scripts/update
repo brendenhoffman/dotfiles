@@ -1,5 +1,6 @@
 #!/bin/sh
 set -e
+sudo_do() { [ "$(id -u)" -eq 0 ] && "$@" || sudo "$@"; }
 update_nvim_release() {
   ver=$(nvim --version 2>/dev/null | head -1 | sed -n 's/^NVIM v0\.\([0-9]*\).*/\1/p')
   [ -n "$ver" ] && [ "$ver" -ge 12 ] && return
@@ -16,14 +17,15 @@ update_nvim_release() {
   mv "$tmp"/nvim-linux-*/ "$dest"
   mkdir -p "$HOME/.local/bin"
   ln -sfn "$dest/bin/nvim" "$HOME/.local/bin/nvim"
+  [ "$(id -u)" -eq 0 ] && ln -sfn "$dest/bin/nvim" /usr/local/bin/nvim
   rm -rf "$tmp"
 }
 if   command -v yay     >/dev/null 2>&1; then yay -Syu
 elif command -v paru    >/dev/null 2>&1; then paru -Syu
-elif command -v pacman  >/dev/null 2>&1; then sudo pacman -Syu
-elif command -v apt-get >/dev/null 2>&1; then sudo apt-get update && sudo apt-get full-upgrade -y; update_nvim_release
-elif command -v dnf     >/dev/null 2>&1; then sudo dnf upgrade -y; update_nvim_release
-elif command -v apk     >/dev/null 2>&1; then sudo apk upgrade; update_nvim_release; fi
+elif command -v pacman  >/dev/null 2>&1; then sudo_do pacman -Syu
+elif command -v apt-get >/dev/null 2>&1; then sudo_do apt-get update; if [ -d /etc/pve ]; then echo "pve: skipping full-upgrade, use Proxmox's own upgrade process" >&2; else sudo_do apt-get full-upgrade -y; fi; update_nvim_release
+elif command -v dnf     >/dev/null 2>&1; then sudo_do dnf upgrade -y; update_nvim_release
+elif command -v apk     >/dev/null 2>&1; then sudo_do apk upgrade; update_nvim_release; fi
 rustup update
 cargo install-update -a
 
@@ -31,5 +33,5 @@ cargo_bin="${CARGO_HOME:-$HOME/.local/share/cargo}/bin"
 scripts_dir=$(dirname "$(readlink -f "$0")")
 while IFS= read -r bin; do
   [ -x "$cargo_bin/$bin" ] || continue
-  sudo install -o root -g root -m 0755 "$cargo_bin/$bin" /usr/local/bin/
+  sudo_do install -o root -g root -m 0755 "$cargo_bin/$bin" /usr/local/bin/
 done < "$scripts_dir/cargo-system-bins"
