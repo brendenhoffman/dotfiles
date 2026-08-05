@@ -9,7 +9,6 @@ NEED_LINK_DIRS=(
   ".config/starship.toml"
   ".config/yay"
   ".config/nvim"
-  ".config/zed"
 )
 
 SCRIPTS_DIR="$REPO_DIR/scripts"
@@ -245,15 +244,25 @@ EOF
 }
 
 arch_install_packages() {
+  local headless="$1"
   local pm=pacman
   have yay && pm=yay
   # base-devel provides gcc/make needed for rustup to link
   sudo_do pacman -S --needed --noconfirm base-devel curl || true
-  $pm -S --needed --noconfirm fish fzf zed micro ttf-jetbrains-mono-nerd \
-    less unzip xz zstd pigz pbzip2 || true
-  # Desktop-only extras (Arch is the desktop box; other distros are headless)
-  $pm -S --needed --noconfirm zathura ksshaskpass gparted fastfetch \
-    transmission-cli moc 7zip unrar cabextract ncompress || true
+
+  local pkgs=(fish fzf micro ttf-jetbrains-mono-nerd less unzip xz zstd pigz pbzip2)
+  $headless || pkgs+=(zed)
+  $pm -S --needed --noconfirm "${pkgs[@]}" || true
+
+  # CLI extras, useful even headless (Arch is normally the desktop box, but
+  # none of these need a display)
+  $pm -S --needed --noconfirm fastfetch transmission-cli moc 7zip unrar \
+    cabextract ncompress || true
+
+  # GUI-only extras; skip under --headless
+  if ! $headless; then
+    $pm -S --needed --noconfirm zathura ksshaskpass gparted || true
+  fi
 }
 
 configure_yay() {
@@ -674,8 +683,14 @@ deploy_scripts() {
 
 # ── Main ──────────────────────────────────────────────────────────────
 main() {
-  local pve=false
-  [ "${1:-}" = "--pve" ] && pve=true
+  local pve=false headless=false
+  for arg in "$@"; do
+    case "$arg" in
+      --pve) pve=true ;;
+      --headless) headless=true ;;
+      *) err "Unknown option: $arg"; exit 1 ;;
+    esac
+  done
 
   # --pve targets a Proxmox VE host: Debian-based, root-only by design (no
   # sudo in normal use), no desktop, and its own upgrade/repo discipline
@@ -690,12 +705,14 @@ main() {
   ensure_repo
   mkdir -p "$BACKUP_DIR"
 
-  for rel in "${NEED_LINK_DIRS[@]}"; do link_into_home "$rel"; done
+  local link_dirs=("${NEED_LINK_DIRS[@]}")
+  $headless || link_dirs+=(".config/zed")
+  for rel in "${link_dirs[@]}"; do link_into_home "$rel"; done
 
   if have pacman; then
     if arch_offer_system_upgrade_or_abort; then
       arch_setup_chaotic_and_yay
-      arch_install_packages
+      arch_install_packages "$headless"
       configure_yay
     else
       warn "Skipping Arch package installs."

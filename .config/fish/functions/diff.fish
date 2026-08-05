@@ -1,5 +1,5 @@
 function diff --wraps diff
-    if command -q zeditor; or command -q zed-editor; or command -q zed; or command -q zedit
+    if _zed_bin >/dev/null
         zed -diff $argv
     else
         delta $argv

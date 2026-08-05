@@ -1,11 +1,11 @@
 # ── editor / config ────────────────────────────────────────────────────
-alias v='zed'
-alias vv='sudoedit'
+# v (functions/v.fish): opens zed, falls back to $EDITOR when unavailable
+# vv (functions/vv.fish): sudoedit, falls back to sudo $EDITOR if refused
 alias fishrc='zed $XDG_CONFIG_HOME/fish/config.fish'
 alias fishrcd='cl $XDG_CONFIG_HOME/fish/conf.d'
 alias reload='exec fish'
-alias aliases='zed $XDG_CONFIG_HOME/fish/conf.d/04-aliases.fish'
-alias dots='zed ~/local/git/dotfiles'
+# aliases (functions/aliases.fish): edits this file via v (zed, falls back to $EDITOR)
+# dots (functions/dots.fish): opens dotfiles repo in zed, falls back to cl
 
 # ── navigation ─────────────────────────────────────────────────────────
 alias cd='z'
